@@ -46,8 +46,8 @@ import javafx.util.Duration;
  * The Data Y value is used for the opening price and then the close, high and
  * low values are stored in the Data's extra value property using a
  * CandleStickExtraValues object.
- * 
- * 
+ *
+ *
  */
 public class CandleStickChart extends XYChart<String, Number> {
 
@@ -59,10 +59,10 @@ public class CandleStickChart extends XYChart<String, Number> {
     protected NumberAxis yAxis;
     protected CategoryAxis xAxis;
 
-    
-    
+
+
     /**
-     * 
+     *
      * @param title The chart title
      * @param bars  The bars data to display in the chart.
      */
@@ -70,9 +70,9 @@ public class CandleStickChart extends XYChart<String, Number> {
         this(title, bars, Integer.MAX_VALUE);
     }
 
-    
+
     /**
-     * 
+     *
      * @param title The chart title
      * @param bars The bars to display in the chart
      * @param maxBarsToDisplay The maximum number of bars to display in the chart.
@@ -110,8 +110,8 @@ public class CandleStickChart extends XYChart<String, Number> {
             String label = "";
             label = sdf.format(bar.getDateTime().getTime());
             series.getData().add(new XYChart.Data<>(label, bar.getOpen(), bar));
-            logger.log(Level.INFO, "Adding bar with date/time: {0}", bar.getDateTime().getTime());
-            logger.log(Level.INFO, "Adding bar with price: {0}", bar.getOpen());
+//            logger.log(Level.INFO, "Adding bar with date/time: {0}", bar.getDateTime().getTime());
+//            logger.log(Level.INFO, "Adding bar with price: {0}", bar.getOpen());
         }
 
         dataSeries = FXCollections.observableArrayList(series);
@@ -120,7 +120,7 @@ public class CandleStickChart extends XYChart<String, Number> {
         lastBar = sublist.get(sublist.size() - 1);
     }
 
-    
+
     /**
      * Defines a formatter to use when formatting the y-axis values.
      * @param formatter The formatter to use when formatting the y-axis values.
@@ -129,7 +129,7 @@ public class CandleStickChart extends XYChart<String, Number> {
         yAxis.setTickLabelFormatter(formatter);
     }
 
-    
+
     /**
      * Appends a new bar on to the end of the chart.
      * @param bar The bar to append to the chart
@@ -144,37 +144,38 @@ public class CandleStickChart extends XYChart<String, Number> {
         dataSeries.get(0).getData().get(datalength - 1).setYValue(bar.getOpen());
         dataSeries.get(0).getData().get(datalength - 1).setExtraValue(bar);
         String label = sdf.format(bar.getDateTime().getTime());
-        logger.log(Level.INFO, "Adding bar with actual time:  {0}", bar.getDateTime().getTime());
-        logger.log(Level.INFO, "Adding bar with formated time: {0}", label);
+//        logger.log(Level.INFO, "Adding bar with actual time:  {0}", bar.getDateTime().getTime());
+//        logger.log(Level.INFO, "Adding bar with formated time: {0}", label);
 
         lastBar = new BarData(bar.getDateTime(), bar.getClose(), bar.getClose(), bar.getClose(), bar.getClose(), 0);
         Data<String, Number> data = new XYChart.Data<>(label, lastBar.getOpen(), lastBar);
         dataSeries.get(0).getData().add(data);
-        
-        
-        
+
+
+
     }
 
-    
+
     /**
      * Update the "Last" price of the most recent bar
      * @param price The Last price of the most recent bar.
      */
     public void updateLast(double price) {
-        if (lastBar != null) {
-            lastBar.update(price);
-            logger.log(Level.INFO, "Updating last bar with date/time: {0}", lastBar.getDateTime().getTime());
-
-            int datalength = dataSeries.get(0).getData().size();
-            dataSeries.get(0).getData().get(datalength - 1).setYValue(lastBar.getOpen());
-
-            dataSeries.get(0).getData().get(datalength - 1).setExtraValue(lastBar);
-            logger.log(Level.INFO, "Updating last bar with formatteddate/time: {0}", dataSeries.get(0).getData().get(datalength - 1).getXValue());
-        }
+    	logger.log(Level.INFO, "Updating!!!! updateLast()");
+//        if (lastBar != null) {
+//            lastBar.update(price);
+//            logger.log(Level.INFO, "Updating last bar with date/time: {0}", lastBar.getDateTime().getTime());
+//
+//            int datalength = dataSeries.get(0).getData().size();
+//            dataSeries.get(0).getData().get(datalength - 1).setYValue(lastBar.getOpen());
+//
+//            dataSeries.get(0).getData().get(datalength - 1).setExtraValue(lastBar);
+//            logger.log(Level.INFO, "Updating last bar with formatteddate/time: {0}", dataSeries.get(0).getData().get(datalength - 1).getXValue());
+//        }
     }
 
-    
-    
+
+
     protected List<BarData> getSubList(List<BarData> bars, int maxBars) {
         List<BarData> sublist;
         if (bars.size() > maxBars) {
@@ -194,6 +195,7 @@ public class CandleStickChart extends XYChart<String, Number> {
         if (getData() == null) {
             return;
         }
+
         // update candle positions
         for (int seriesIndex = 0; seriesIndex < getData().size(); seriesIndex++) {
             Series<String, Number> series = getData().get(seriesIndex);
