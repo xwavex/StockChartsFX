@@ -49,7 +49,7 @@ public class MainApp extends Application {
 		List<TimingData> data = new ArrayList<>();
 		JSONParser parser = new JSONParser();
 		try {
-			Object obj = parser.parse(new FileReader("/home/dwigand/code/misc/java/javafx/StockChartsFX/reports.dat"));
+			Object obj = parser.parse(new FileReader("/home/dwigand/code/cogimon/CoSimA/framework-extensions/rtt-core-extensions/build/reports.dat"));
 
 			JSONObject jsonObject = (JSONObject) obj;
 			// System.out.println(jsonObject);
@@ -79,7 +79,7 @@ public class MainApp extends Application {
 
 				if (call_type != null && !call_type.isEmpty() && call_name != null && !call_name.isEmpty()
 						&& container_name != null && !container_name.isEmpty()) {
-					if (call_name.equals("port_access")) {
+					if (call_type.contains("PORT")) {
 						if (call_time > 0 && call_time < minimalTimestamp) {
 							minimalTimestamp = call_time;
 						}
@@ -109,9 +109,9 @@ public class MainApp extends Application {
 							}
 
 							//TODO dummy remove
-							if (call_duration - call_time < 500000L) {
-								call_duration = call_duration + 50*1000000L;
-							}
+//							if (call_duration - call_time < 500000L) {
+//								call_duration = call_duration + 50*1000000L;
+//							}
 
 							data.add(new CallEventData(call_name, container_name, call_time, call_duration));
 						} else {
@@ -148,7 +148,7 @@ public class MainApp extends Application {
 			}
 		}
 
-		CandleStickChart candleStickChart = new CandleStickChart("Timing Chart DLW", data, 10);
+		CandleStickChart candleStickChart = new CandleStickChart("Timing Chart DLW", data);
 		Scene scene = new Scene(candleStickChart);
 		scene.getStylesheets().add("/styles/CandleStickChartStyles.css");
 
@@ -189,11 +189,11 @@ public class MainApp extends Application {
 		CallEventData ib2Update = new CallEventData();
 		PortEventData ib2PortAccess = new PortEventData();
 
-		System.out.println("ib - ib2 = " + (1513785953570310542L - 1513785953572173848L));
-
-		System.out.println("ib = " + (1513785953570323730L - 1513785953570310542L));
-
-		System.out.println("ib2 = " + (1513785953672239432L - 1513785953672232511L));
+//		System.out.println("ib - ib2 = " + (1513785953570310542L - 1513785953572173848L));
+//
+//		System.out.println("ib = " + (1513785953570323730L - 1513785953570310542L));
+//
+//		System.out.println("ib2 = " + (1513785953672239432L - 1513785953672232511L));
 
 		ib2Update = new CallEventData("updateHook()", "ib2", 1513785953572173848L, 1513785953572184113L);
 		data.add(ib2Update);

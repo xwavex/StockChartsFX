@@ -313,7 +313,7 @@ public class CandleStickChart extends XYChart<Number, String> {
                     }
 
                     // update tooltip content
-//                    candle.updateTooltip(bar.getOpen(), bar.getClose(), bar.getHigh(), bar.getLow());
+//                    tBlock.updateTooltip(bar.getOpen(), bar.getClose(), bar.getHigh(), bar.getLow());
 
                     // position the candle
                     tBlock.setLayoutX(x);
@@ -433,7 +433,8 @@ public class CandleStickChart extends XYChart<Number, String> {
         //}
 
         if (item.getExtraValue() instanceof CallEventData) {
-            node = new TimingBlock("series" + seriesIndex, "data" + itemIndex);
+        	CallEventData tmp = (CallEventData) item.getExtraValue();
+            node = new TimingBlock("series" + seriesIndex, "data" + itemIndex, tmp.getName(), tmp.getContainerName(), tmp.getTimestamp(), tmp.getEndTimestamp());
             item.setNode(node);
         } else if (item.getExtraValue() instanceof PortEventData) {
         	PortEventData tmp = (PortEventData) item.getExtraValue();
