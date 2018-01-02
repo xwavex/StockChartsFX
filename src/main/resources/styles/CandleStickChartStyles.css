@@ -34,18 +34,23 @@ limitations under the License.
     -fx-stroke-width: 1px;
 }
 
+.candlestick-line-port {
+    -fx-stroke: #FF0000;
+    -fx-stroke-width: 1px;
+}
+
 
 .candlestick-bar.close-above-open {
-    -fx-background-color: rgb(25,225,25,1.00);
-    -fx-border-width: 1, 1,1,1;
-    -fx-border-color: #e2e2e2;
+    -fx-background-color: rgb(200,200,200,1.00);
+    -fx-border-width: 1.5,1.5,1.5,1.5;
+    -fx-border-color: #000000;
 }
 
 .candlestick-bar.open-above-close {
-    -fx-background-color: rgb(255,34,34,1.00); 
-    -fx-border-width: 1, 1,1,1;
+    -fx-background-color: rgb(200,200,200,1.00);
+    -fx-border-width: 1.5,1.5,1.5,1.5;
     -fx-font-weight: bold;
-    -fx-border-color: #e2e2e2;
+    -fx-border-color: #000000;
 }
 
 
@@ -58,7 +63,7 @@ limitations under the License.
     -fx-font-color: #FFFFFF;
     -fx-tick-label-fill: #FFFFFF;
     -fx-font-size: 18pt;
-    -fx-font-family: "Segoe UI Light";    
+    -fx-font-family: "Segoe UI Light";
     -fx-tick-length: 20;
     -fx-minor-tick-length: 10;
 }
@@ -66,27 +71,27 @@ limitations under the License.
 .chart-title {
      -fx-text-fill: #FFFFFF;
     -fx-font-size: 20pt;
-    -fx-font-family: "Segoe UI Light";    
+    -fx-font-family: "Segoe UI Light";
 }
 
 .axis-label {
-    -fx-text-fill: #462300; 
+    -fx-text-fill: #462300;
 }
 
 .axis-tick-mark {
     -fx-stroke: #637040;
-    -fx-stroke-width: 3; 
+    -fx-stroke-width: 3;
 }
 .axis-minor-tick-mark {
     -fx-stroke: #859656;
 }
 
-/*{ 
+/*{
 
 }
 */
 .chart {
-  -fx-background-color: #657F92;  
+  -fx-background-color: #657F92;
 }
 .fx-background-color {
   -fx-background-color: red;

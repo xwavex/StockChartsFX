@@ -22,11 +22,16 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import de.dlw.timing.viz.data.CallEventData;
+import de.dlw.timing.viz.data.PortEventData;
+import de.dlw.timing.viz.data.TimingData;
+import de.dlw.timing.viz.viewmodel.PortAccessIndicator;
 import de.dlw.timing.viz.viewmodel.TimingBlock;
 import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.chart.Axis;
@@ -35,10 +40,14 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Path;
+import javafx.scene.transform.NonInvertibleTransformException;
+import javafx.scene.transform.Transform;
 import javafx.util.Duration;
 
 /**
@@ -51,15 +60,16 @@ import javafx.util.Duration;
  *
  *
  */
-public class CandleStickChart extends XYChart<String, Number> {
+public class CandleStickChart extends XYChart<Number, String> {
 
     SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
     protected static final Logger logger = Logger.getLogger(CandleStickChart.class.getName());
     protected int maxBarsToDisplay;
-    protected ObservableList<XYChart.Series<String, Number>> dataSeries;
-    protected BarData lastBar;
-    protected NumberAxis yAxis;
-    protected CategoryAxis xAxis;
+    protected ObservableList<XYChart.Series<Number, String>> dataSeries;
+    protected TimingData lastBar;
+    protected CategoryAxis yAxis;
+    protected NumberAxis xAxis;
+    private double oldMouseX;
 
 
 
@@ -68,7 +78,7 @@ public class CandleStickChart extends XYChart<String, Number> {
      * @param title The chart title
      * @param bars  The bars data to display in the chart.
      */
-    public CandleStickChart(String title, List<BarData> bars) {
+    public CandleStickChart(String title, List<TimingData> bars) {
         this(title, bars, Integer.MAX_VALUE);
     }
 
@@ -79,8 +89,8 @@ public class CandleStickChart extends XYChart<String, Number> {
      * @param bars The bars to display in the chart
      * @param maxBarsToDisplay The maximum number of bars to display in the chart.
      */
-    public CandleStickChart(String title, List<BarData> bars, int maxBarsToDisplay) {
-        this(title, new CategoryAxis(), new NumberAxis(), bars, maxBarsToDisplay);
+    public CandleStickChart(String title, List<TimingData> bars, int maxBarsToDisplay) {
+        this(title, new NumberAxis(), new CategoryAxis(), bars, maxBarsToDisplay);
     }
 
     /**
@@ -92,34 +102,98 @@ public class CandleStickChart extends XYChart<String, Number> {
      * @param bars The bars to display on the chart
      * @param maxBarsToDisplay The maximum number of bars to display on the chart.
      */
-    public CandleStickChart(String title, CategoryAxis xAxis, NumberAxis yAxis, List<BarData> bars, int maxBarsToDisplay) {
+    public CandleStickChart(String title, NumberAxis xAxis, CategoryAxis yAxis, List<TimingData> bars, int maxBarsToDisplay) {
         super(xAxis, yAxis);
         this.xAxis = xAxis;
         this.yAxis = yAxis;
         this.maxBarsToDisplay = maxBarsToDisplay;
 
-        yAxis.autoRangingProperty().set(true);
-        yAxis.forceZeroInRangeProperty().setValue(Boolean.FALSE);
+        xAxis.autoRangingProperty().set(true);
+        xAxis.forceZeroInRangeProperty().setValue(Boolean.FALSE);
         setTitle(title);
         setAnimated(true);
         getStylesheets().add(getClass().getResource("/styles/CandleStickChartStyles.css").toExternalForm());
         xAxis.setAnimated(true);
         yAxis.setAnimated(true);
         verticalGridLinesVisibleProperty().set(false);
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        List<BarData> sublist = getSubList(bars, maxBarsToDisplay);
-        for (BarData bar : sublist) {
+        XYChart.Series<Number, String> series = new XYChart.Series<>();
+        List<TimingData> sublist = getSubList(bars, maxBarsToDisplay);
+        for (TimingData bar : sublist) {
             String label = "";
-            label = sdf.format(bar.getDateTime().getTime());
-            series.getData().add(new XYChart.Data<>(label, bar.getOpen(), bar));
-//            logger.log(Level.INFO, "Adding bar with date/time: {0}", bar.getDateTime().getTime());
-//            logger.log(Level.INFO, "Adding bar with price: {0}", bar.getOpen());
+            if (bar instanceof CallEventData) {
+            	label = ((CallEventData)bar).getContainerName();
+            } else if (bar instanceof PortEventData) {
+            	label = ((PortEventData)bar).getContainerName();
+            } else {
+            	label = bar.getName();
+            }
+
+            series.getData().add(new XYChart.Data<>(bar.getTimestamp2msecs(), label, bar));
         }
 
         dataSeries = FXCollections.observableArrayList(series);
 
         setData(dataSeries);
+        // TODO maybe not general but only last CallEventData?!
         lastBar = sublist.get(sublist.size() - 1);
+
+        final double SCALE_DELTA = 1.1;
+        this.setOnScroll(new EventHandler<ScrollEvent>() {
+            public void handle(ScrollEvent event) {
+                event.consume();
+
+                if (event.getDeltaY() == 0) {
+                    return;
+                }
+
+                double scaleFactor = (event.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
+                xAxis.autoRangingProperty().set(false);
+//                xAxis.setTickUnit(1);
+
+                if (event.getDeltaY() > 0) {
+                	double newL = xAxis.getLowerBound() + xAxis.getTickUnit();
+                	double newU = xAxis.getUpperBound() - xAxis.getTickUnit();
+                	if (newL < newU) {
+                		xAxis.setLowerBound(newL);
+                		xAxis.setUpperBound(newU);
+                	}
+                } else {
+                	double newL = xAxis.getLowerBound() - xAxis.getTickUnit();
+                	double newU = xAxis.getUpperBound() + xAxis.getTickUnit();
+            		xAxis.setLowerBound(newL);
+            		xAxis.setUpperBound(newU);
+                }
+            }
+        });
+
+        this.setOnMousePressed(new EventHandler<MouseEvent>() {
+            public void handle(MouseEvent event) {
+                if (event.getClickCount() == 2) {
+                	xAxis.autoRangingProperty().set(true);
+                }
+                oldMouseX = event.getSceneX();
+            }
+        });
+
+        this.setOnMouseDragged(new EventHandler<MouseEvent>() {
+        	public void handle(MouseEvent event) {
+        		event.consume();
+        		xAxis.autoRangingProperty().set(false);
+
+				double oldX = xAxis.sceneToLocal(oldMouseX, 0).getX();
+				double newX = xAxis.sceneToLocal(event.getSceneX(), 0).getX();
+
+				double oldXvalue = xAxis.getValueForDisplay(oldX).doubleValue();
+				double newXvalue = xAxis.getValueForDisplay(newX).doubleValue();
+                double dM = newXvalue - oldXvalue;
+
+        		xAxis.setLowerBound(xAxis.getLowerBound() - dM);
+        		xAxis.setUpperBound(xAxis.getUpperBound() - dM);
+
+        		oldMouseX = event.getSceneX();
+
+            }
+        });
     }
 
 
@@ -127,35 +201,35 @@ public class CandleStickChart extends XYChart<String, Number> {
      * Defines a formatter to use when formatting the y-axis values.
      * @param formatter The formatter to use when formatting the y-axis values.
      */
-    public void setYAxisFormatter(DecimalAxisFormatter formatter) {
-        yAxis.setTickLabelFormatter(formatter);
+    public void setXAxisFormatter(DecimalAxisFormatter formatter) {
+        xAxis.setTickLabelFormatter(formatter);
     }
 
 
-    /**
-     * Appends a new bar on to the end of the chart.
-     * @param bar The bar to append to the chart
-     */
-    public void addBar(BarData bar) {
-
-        if (dataSeries.get(0).getData().size() >= maxBarsToDisplay) {
-            dataSeries.get(0).getData().remove(0);
-        }
-
-        int datalength = dataSeries.get(0).getData().size();
-        dataSeries.get(0).getData().get(datalength - 1).setYValue(bar.getOpen());
-        dataSeries.get(0).getData().get(datalength - 1).setExtraValue(bar);
-        String label = sdf.format(bar.getDateTime().getTime());
-//        logger.log(Level.INFO, "Adding bar with actual time:  {0}", bar.getDateTime().getTime());
-//        logger.log(Level.INFO, "Adding bar with formated time: {0}", label);
-
-        lastBar = new BarData(bar.getDateTime(), bar.getClose(), bar.getClose(), bar.getClose(), bar.getClose(), 0);
-        Data<String, Number> data = new XYChart.Data<>(label, lastBar.getOpen(), lastBar);
-        dataSeries.get(0).getData().add(data);
-
-
-
-    }
+//    /**
+//     * Appends a new bar on to the end of the chart.
+//     * @param bar The bar to append to the chart
+//     */
+//    public void addBar(BarData bar) {
+//
+//        if (dataSeries.get(0).getData().size() >= maxBarsToDisplay) {
+//            dataSeries.get(0).getData().remove(0);
+//        }
+//
+//        int datalength = dataSeries.get(0).getData().size();
+//        dataSeries.get(0).getData().get(datalength - 1).setYValue(bar.getOpen());
+//        dataSeries.get(0).getData().get(datalength - 1).setExtraValue(bar);
+//        String label = sdf.format(bar.getDateTime().getTime());
+////        logger.log(Level.INFO, "Adding bar with actual time:  {0}", bar.getDateTime().getTime());
+////        logger.log(Level.INFO, "Adding bar with formated time: {0}", label);
+//
+//        lastBar = new BarData(bar.getDateTime(), bar.getClose(), bar.getClose(), bar.getClose(), bar.getClose(), 0);
+//        Data<String, Number> data = new XYChart.Data<>(label, lastBar.getOpen(), lastBar);
+//        dataSeries.get(0).getData().add(data);
+//
+//
+//
+//    }
 
 
     /**
@@ -178,8 +252,8 @@ public class CandleStickChart extends XYChart<String, Number> {
 
 
 
-    protected List<BarData> getSubList(List<BarData> bars, int maxBars) {
-        List<BarData> sublist;
+    protected List<TimingData> getSubList(List<TimingData> bars, int maxBars) {
+        List<TimingData> sublist;
         if (bars.size() > maxBars) {
             return bars.subList(bars.size() - 1 - maxBars, bars.size() - 1);
         } else {
@@ -200,40 +274,57 @@ public class CandleStickChart extends XYChart<String, Number> {
 
         // update candle positions
         for (int seriesIndex = 0; seriesIndex < getData().size(); seriesIndex++) {
-            Series<String, Number> series = getData().get(seriesIndex);
-            Iterator<Data<String, Number>> iter = getDisplayedDataIterator(series);
+            Series<Number, String> series = getData().get(seriesIndex);
+            Iterator<Data<Number, String>> iter = getDisplayedDataIterator(series);
             Path seriesPath = null;
             if (series.getNode() instanceof Path) {
                 seriesPath = (Path) series.getNode();
                 seriesPath.getElements().clear();
             }
             while (iter.hasNext()) {
-                Data<String, Number> item = iter.next();
+                Data<Number, String> item = iter.next();
                 double x = getXAxis().getDisplayPosition(getCurrentDisplayedXValue(item));
                 double y = getYAxis().getDisplayPosition(getCurrentDisplayedYValue(item));
 
 //                double lengthh = getYAxis().getTickLength();
 
                 Node itemNode = item.getNode();
-                BarData bar = (BarData) item.getExtraValue();
+                TimingData bar = (TimingData) item.getExtraValue();
                 if (itemNode instanceof TimingBlock && item.getYValue() != null) {
-                	TimingBlock candle = (TimingBlock) itemNode;
-
-                    double close = getYAxis().getDisplayPosition(bar.getClose());
-                    double high = getYAxis().getDisplayPosition(bar.getHigh());
-                    double low = getYAxis().getDisplayPosition(bar.getLow());
-                    double candleWidth = 10;
+                	TimingBlock tBlock = (TimingBlock) itemNode;
                     // update candle
 //                    candle.update(close - y, high - y, low - y, candleWidth);
+//                	double startX = getXAxis().getDisplayPosition(((CallEventData)item.getExtraValue()).getTimestamp2msecs());
+                    double endX = getXAxis().getDisplayPosition(((CallEventData)item.getExtraValue()).getEndTimestamp2msecs());
+//                    System.out.println("s = " + ((CallEventData)item.getExtraValue()).getTimestamp());
+//                    System.out.println("e = " + ((CallEventData)item.getExtraValue()).getEndTimestamp());
+//                    System.out.println("sX = " + startX);
 
-                    candle.update(x, y, 10, 15);
+                    double dX = endX - x;
+//                    System.out.println("dX = " + (endX - x));
+//                    System.out.println("X = " + (x));
+//                    System.out.println("startX = " + (startX));
+//                    System.out.println("endX = " + (endX));
+//                    System.out.println("-------------");
+                    if (dX < 1) {
+                    	tBlock.update(0, -10, 1, 20);
+                    } else {
+                    	tBlock.update(0, -10, dX, 20);
+                    }
 
                     // update tooltip content
 //                    candle.updateTooltip(bar.getOpen(), bar.getClose(), bar.getHigh(), bar.getLow());
 
                     // position the candle
-                    candle.setLayoutX(x);
-                    candle.setLayoutY(y);
+                    tBlock.setLayoutX(x);
+                    tBlock.setLayoutY(y);
+
+                    tBlock.toBack();
+                } else if (itemNode instanceof PortAccessIndicator && item.getYValue() != null) {
+                	PortAccessIndicator pAI = (PortAccessIndicator) itemNode;
+                	pAI.update();
+                	pAI.setLayoutX(x);
+                	pAI.setLayoutY(y);
                 }
 
             }
@@ -241,12 +332,12 @@ public class CandleStickChart extends XYChart<String, Number> {
     }
 
     @Override
-    protected void dataItemChanged(Data<String, Number> item) {
+    protected void dataItemChanged(Data<Number, String> item) {
     }
 
     @Override
-    protected void dataItemAdded(Series<String, Number> series, int itemIndex, Data<String, Number> item) {
-        Node candle = createCandle(getData().indexOf(series), item, itemIndex);
+    protected void dataItemAdded(Series<Number, String> series, int itemIndex, Data<Number, String> item) {
+        Node candle = createTimingElement(getData().indexOf(series), item, itemIndex);
         if (shouldAnimate()) {
             candle.setOpacity(0);
             getPlotChildren().add(candle);
@@ -264,7 +355,7 @@ public class CandleStickChart extends XYChart<String, Number> {
     }
 
     @Override
-    protected void dataItemRemoved(Data<String, Number> item, Series<String, Number> series) {
+    protected void dataItemRemoved(Data<Number, String> item, Series<Number, String> series) {
         final Node candle = item.getNode();
         if (shouldAnimate()) {
             // fade out old candle
@@ -280,11 +371,11 @@ public class CandleStickChart extends XYChart<String, Number> {
     }
 
     @Override
-    protected void seriesAdded(Series<String, Number> series, int seriesIndex) {
+    protected void seriesAdded(Series<Number, String> series, int seriesIndex) {
         // handle any data already in series
         for (int j = 0; j < series.getData().size(); j++) {
             Data item = series.getData().get(j);
-            Node candle = createCandle(seriesIndex, item, j);
+            Node candle = createTimingElement(seriesIndex, item, j);
             if (shouldAnimate()) {
                 candle.setOpacity(0);
                 getPlotChildren().add(candle);
@@ -304,9 +395,9 @@ public class CandleStickChart extends XYChart<String, Number> {
     }
 
     @Override
-    protected void seriesRemoved(Series<String, Number> series) {
+    protected void seriesRemoved(Series<Number, String> series) {
         // remove all candle nodes
-        for (XYChart.Data<String, Number> d : series.getData()) {
+        for (XYChart.Data<Number, String> d : series.getData()) {
             final Node candle = d.getNode();
             if (shouldAnimate()) {
                 // fade out old candle
@@ -330,16 +421,26 @@ public class CandleStickChart extends XYChart<String, Number> {
      * @param itemIndex The index of the data item in the series
      * @return New candle node to represent the give data item
      */
-    private Node createCandle(int seriesIndex, final Data item, int itemIndex) {
-        Node candle = item.getNode();
+    private Node createTimingElement(int seriesIndex, final Data item, int itemIndex) {
+        Node node = item.getNode();
         // check if candle has already been created
-        if (candle instanceof TimingBlock) {
-            ((TimingBlock) candle).setSeriesAndDataStyleClasses("series" + seriesIndex, "data" + itemIndex);
-        } else {
-            candle = new TimingBlock("series" + seriesIndex, "data" + itemIndex);
-            item.setNode(candle);
+        if (node instanceof TimingBlock) {
+            ((TimingBlock) node).setSeriesAndDataStyleClasses("series" + seriesIndex, "data" + itemIndex);
+            return node;
+        }// else if (candle instanceof PortAccessIndicator) {
+        //	((PortAccessIndicator) candle).setSeriesAndDataStyleClasses("series" + seriesIndex, "data" + itemIndex);
+        //    return candle;
+        //}
+
+        if (item.getExtraValue() instanceof CallEventData) {
+            node = new TimingBlock("series" + seriesIndex, "data" + itemIndex);
+            item.setNode(node);
+        } else if (item.getExtraValue() instanceof PortEventData) {
+        	PortEventData tmp = (PortEventData) item.getExtraValue();
+        	node = new PortAccessIndicator("series" + seriesIndex, "data" + itemIndex, tmp.getCallType());
+            item.setNode(node);
         }
-        return candle;
+        return node;
     }
 
     /**
@@ -352,38 +453,39 @@ public class CandleStickChart extends XYChart<String, Number> {
     protected void updateAxisRange() {
         // For candle stick chart we need to override this method as we need to let the axis know that they need to be able
         // to cover the whole area occupied by the high to low range not just its center data value
-        final Axis<String> xa = getXAxis();
-        final Axis<Number> ya = getYAxis();
-        List<String> xData = null;
-        List<Number> yData = null;
-        if (xa.isAutoRanging()) {
-            xData = new ArrayList<>();
-        }
+        final Axis<Number> xa = getXAxis();
+        final Axis<String> ya = getYAxis();
+        List<Number> xData = null;
+        List<String> yData = null;
         if (ya.isAutoRanging()) {
             yData = new ArrayList<>();
         }
-        if (xData != null || yData != null) {
-            for (Series<String, Number> series : getData()) {
-                for (Data<String, Number> data : series.getData()) {
-                    if (xData != null) {
-                        xData.add(data.getXValue());
-                    }
+        if (xa.isAutoRanging()) {
+            xData = new ArrayList<>();
+        }
+        if (yData != null || xData != null) {
+            for (Series<Number, String> series : getData()) {
+                for (Data<Number, String> data : series.getData()) {
                     if (yData != null) {
-                        BarData extras = (BarData) data.getExtraValue();
-                        if (extras != null) {
-                            yData.add(extras.getHigh());
-                            yData.add(extras.getLow());
+                        yData.add(data.getYValue());
+                    }
+                    if (xData != null) {
+                        TimingData extras = (TimingData) data.getExtraValue();
+                        if (extras != null) { // TODO ?
+                        	xData.add(extras.getTimestamp2msecs());
+//                          xData.add(extras.getHigh());
+//                          xData.add(extras.getLow());
                         } else {
-                            yData.add(data.getYValue());
+                            xData.add(data.getXValue());
                         }
                     }
                 }
             }
-            if (xData != null) {
-                xa.invalidateRange(xData);
-            }
             if (yData != null) {
                 ya.invalidateRange(yData);
+            }
+            if (xData != null) {
+                xa.invalidateRange(xData);
             }
         }
     }
@@ -408,7 +510,8 @@ public class CandleStickChart extends XYChart<String, Number> {
 //            updateStyleClasses();
 //            tooltip.setGraphic(new TooltipContent());
 //            Tooltip.install(bar, tooltip);
-//        }
+//        }        private String seriesStyleClass;
+    private String dataStyleClass;
 //
 //        public void setSeriesAndDataStyleClasses(String seriesStyleClass, String dataStyleClass) {
 //            this.seriesStyleClass = seriesStyleClass;

@@ -93,6 +93,10 @@ public class CallEventData extends TimingData {
 		return timestamp;
 	}
 
+	public double getTimestamp2msecs() {
+		return timestamp * 1e-6;
+	}
+
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
@@ -121,6 +125,10 @@ public class CallEventData extends TimingData {
 
 	public void setEndTimestamp(long endTimestamp) {
 		this.endTimestamp = endTimestamp;
+	}
+
+	public double getEndTimestamp2msecs() {
+		return endTimestamp * 1e-6;
 	}
 
 	@Override

@@ -76,6 +76,10 @@ public class TimingData implements Serializable {
 		return timestamp;
 	}
 
+	public double getTimestamp2msecs() {
+		return timestamp * 1e-6;
+	}
+
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
@@ -126,4 +130,7 @@ public class TimingData implements Serializable {
         return true;
     }
 
+    public static double nsecs2msecs(long nsecs) {
+    	return ((double)nsecs) * 1e-6;
+    }
 }
