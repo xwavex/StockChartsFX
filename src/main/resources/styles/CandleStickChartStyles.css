@@ -39,6 +39,11 @@ limitations under the License.
     -fx-stroke-width: 1px;
 }
 
+.stdregion-bar {
+	-fx-background-color: rgb(20,160,200,1.00);
+    -fx-border-width: 3,3,3,3;
+    -fx-border-color: #FF00F0;
+}
 
 .candlestick-bar.close-above-open {
     -fx-background-color: rgb(200,200,200,1.00);

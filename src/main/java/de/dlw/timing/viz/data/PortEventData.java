@@ -59,8 +59,8 @@ public class PortEventData extends TimingData {
 
 	}
 
-	public PortEventData(String containerName, long timestamp, CallPortType callType) {
-		this.name = "port_access";// TODO PORT NAME IS MISSING!
+	public PortEventData(String name, String containerName, long timestamp, CallPortType callType) {
+		this.name = name;
 		this.timestamp = timestamp;
 		this.containerName = containerName;
 		this.callType = callType;

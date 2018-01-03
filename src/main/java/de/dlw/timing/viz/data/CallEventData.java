@@ -5,47 +5,7 @@ package de.dlw.timing.viz.data;
  * @author Dennis Leroy Wigand
  */
 public class CallEventData extends TimingData {
-//	{"call_name":"updateHook()","container_name":"ib","call_time":1513785953570310542,"call_duration":1513785953570323730,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib","call_time":1513785953670314392,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-//
-//	{"call_name":"updateHook()","container_name":"ib","call_time":1513785953670304084,"call_duration":1513785953670322803,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib","call_time":1513785953770317835,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-//
-//	{"call_name":"updateHook()","container_name":"ib","call_time":1513785953770312749,"call_duration":1513785953770326416,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib","call_time":1513785953870303928,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-//
-//	{"call_name":"updateHook()","container_name":"ib","call_time":1513785953870299000,"call_duration":1513785953870312202,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib","call_time":1513785953970241186,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-//
-//	{"call_name":"updateHook()","container_name":"ib2","call_time":1513785953572173848,"call_duration":1513785953572184113,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib2","call_time":1513785953672235242,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-//
-//	{"call_name":"updateHook()","container_name":"ib2","call_time":1513785953672232511,"call_duration":1513785953672239432,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib2","call_time":1513785953772435861,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-//
-//	{"call_name":"updateHook()","container_name":"ib2","call_time":1513785953772430529,"call_duration":1513785953772444672,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib2","call_time":1513785953872169257,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-//
-//	{"call_name":"updateHook()","container_name":"ib2","call_time":1513785953872165545,"call_duration":1513785953872174813,"call_type":"CALL_START_WITH_DURATION"}
-//
-//	{"call_name":"port_access","container_name":"ib2","call_time":1513785953972174661,"call_duration":0,"call_type":"CALL_PORT_WRITE"}
-
-//    public static final double NULL = -9D;
-
-//    public enum LENGTH_UNIT {
-//
-//        TICK, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, YEAR
-//    };
-
 	private static final long serialVersionUID = -7474169739641660644L;
-
 
 	protected String containerName;
 	protected long endTimestamp;
@@ -80,26 +40,6 @@ public class CallEventData extends TimingData {
 //        return BigDecimal.ZERO;
 //    }
 
-
-    public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-	public double getTimestamp2msecs() {
-		return timestamp * 1e-6;
-	}
-
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
 
 	@Override
     public String toString() {
