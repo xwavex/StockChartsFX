@@ -34,9 +34,24 @@ limitations under the License.
     -fx-stroke-width: 1px;
 }
 
-.candlestick-line-port {
-    -fx-stroke: #FF0000;
+.port {
     -fx-stroke-width: 1px;
+}
+
+.port.port-input.port-nodata {
+    -fx-stroke: #FF0000;
+}
+
+.port.port-input.port-olddata {
+    -fx-stroke: #00FFFF;
+}
+
+.port.port-input.port-newdata {
+    -fx-stroke: #00FF00;
+}
+
+.port.port-output {
+    -fx-stroke: #000000;
 }
 
 .stdregion-bar {

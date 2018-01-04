@@ -15,10 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
  */
 
-import java.util.HashMap;
 import java.util.List;
 
-import de.dlw.timing.viz.data.ComponentCallData;
 import de.dlw.timing.viz.data.TimingData;
 import de.dlw.timing.viz.data.parser.DataProcessor;
 import de.dlw.timing.viz.data.parser.JSONDataParser;
@@ -50,7 +48,6 @@ public class MainApp extends Application {
 		for (TimingData timingData : data) {
 			dp.processTimingDataSample(timingData, true);
 		}
-		dp.calculateBasicStatistics();
 //		dp.printReport();
 
 

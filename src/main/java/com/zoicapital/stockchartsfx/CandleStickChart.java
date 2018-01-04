@@ -132,20 +132,6 @@ public class CandleStickChart extends XYChart<Number, String> {
 		verticalGridLinesVisibleProperty().set(false);
 
 		XYChart.Series<Number, String> series = new XYChart.Series<>();
-		// List<TimingData> sublist = getSubList(bars, maxBarsToDisplay);
-//		HashMap<String, ComponentData> sublist = this.componentData;
-
-		// TODO add parameter for data
-//		ArrayList<XYChart.Data<Number, String>> sublist = calculateViewRange();
-
-//		for (XYChart.Data<Number, String> xy : sublist) {
-//			series.getData().add(xy);
-//
-//			// TODO for ports!
-////			for (ComponentPortData cpd : bar.portData.values()) {
-////				series.getData().add(new XYChart.Data<>(cpd.getTimestamp2msecs(average), cpd.getContainerName(), cpd));
-////			}
-//		}
 		dataSeries = FXCollections.observableArrayList(series);
 		this.dataProcessor.setDataSeriesReference(dataSeries);
 		setData(dataSeries);
@@ -485,8 +471,7 @@ public class CandleStickChart extends XYChart<Number, String> {
 			item.setNode(node);
 		} else if (item.getExtraValue() instanceof PortEventData) {
 			PortEventData tmp = (PortEventData) item.getExtraValue();
-			// TODO add additional information!
-			node = new PortAccessIndicator("series" + seriesIndex, "data" + itemIndex, tmp.getCallType());
+			node = new PortAccessIndicator("series" + seriesIndex, "data" + itemIndex, tmp);
 			item.setNode(node);
 		}
 		return node;

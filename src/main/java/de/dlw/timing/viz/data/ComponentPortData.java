@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javafx.scene.chart.XYChart;
+
 /**
  *
  * @author Dennis Leroy Wigand
@@ -15,15 +17,32 @@ public class ComponentPortData extends TimingData {
 
 	protected ArrayList<PortEventData> portEvents;
 
-	// TODO add average!
+	protected ArrayList<XYChart.Data<Number, String>> activeChartData;
+
+	public ArrayList<XYChart.Data<Number, String>> getActiveChartData() {
+		return activeChartData;
+	}
+
+	public void addActiveChartData(XYChart.Data<Number, String> viewSample) {
+		this.activeChartData.add(viewSample);
+	}
+
+	public void setActiveChartData(ArrayList<XYChart.Data<Number, String>> activeChartData) {
+		if (activeChartData == null) {
+			return;
+		}
+		this.activeChartData = activeChartData;
+	}
 
 	public ComponentPortData() {
-		portEvents = new ArrayList<PortEventData>();
+		this.activeChartData = new ArrayList<XYChart.Data<Number, String>>();
+		this.portEvents = new ArrayList<PortEventData>();
 	}
 
 	public ComponentPortData(String name, String containerName) {
 		this.name = name;
 		this.containerName = containerName;
+		this.activeChartData = new ArrayList<XYChart.Data<Number, String>>();
 		this.portEvents = new ArrayList<PortEventData>();
 	}
 
@@ -33,6 +52,20 @@ public class ComponentPortData extends TimingData {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public ArrayList<PortEventData> getPortEventsInRange_MSec(double min, double max) {
+		ArrayList<PortEventData> ret = new ArrayList<PortEventData>();
+		for (PortEventData c : portEvents) {
+			if ((c.getTimestamp2msecs() >= min) && (c.getTimestamp2msecs() <= max)) {
+				ret.add(c);
+			}
+		}
+		return ret;
+	}
+
+	public ArrayList<PortEventData> getPortEventsInRange_NSec(long min, long max) {
+		return getPortEventsInRange_MSec(min * 1e-6, max * 1e-6);
 	}
 
 	public void addPortEvent(PortEventData ped) {
