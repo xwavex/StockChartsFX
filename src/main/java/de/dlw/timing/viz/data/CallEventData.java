@@ -7,6 +7,8 @@ package de.dlw.timing.viz.data;
 public class CallEventData extends TimingData {
 	private static final long serialVersionUID = -7474169739641660644L;
 
+	public ComponentCallData parentReference = null;
+
 	protected String containerName;
 	protected long endTimestamp;
 

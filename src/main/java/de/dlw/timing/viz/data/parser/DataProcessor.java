@@ -1,59 +1,171 @@
 package de.dlw.timing.viz.data.parser;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-
 import de.dlw.timing.viz.data.CallEventData;
 import de.dlw.timing.viz.data.ComponentCallData;
 import de.dlw.timing.viz.data.ComponentData;
 import de.dlw.timing.viz.data.ComponentPortData;
 import de.dlw.timing.viz.data.PortEventData;
 import de.dlw.timing.viz.data.TimingData;
+import javafx.collections.ObservableList;
+import javafx.scene.chart.XYChart;
 
 public class DataProcessor {
-	private List<TimingData> data = new ArrayList<TimingData>();
+	protected Point2D.Double currentBounds;
+	/**
+	 * Component model.
+	 */
 	private HashMap<String, ComponentData> components = new HashMap<String, ComponentData>();
+
+	public void setComponents(HashMap<String, ComponentData> components) {
+		this.components = components;
+	}
+
+	protected ObservableList<XYChart.Series<Number, String>> dataSeriesReference = null;
 
 	public DataProcessor() {
 		components = new HashMap<String, ComponentData>();
+		currentBounds = new Point2D.Double(0, 0);
 	}
 
 	public HashMap<String, ComponentData> getComponents() {
 		return components;
 	}
 
-	public boolean loadDataBatch(List<TimingData> data) {
-		if (data != null) {
-			this.data = data;
-			return true;
-		} else {
-			return false;
+	public void setDataSeriesReference(ObservableList<XYChart.Series<Number, String>> dataSeriesReference) {
+		this.dataSeriesReference = dataSeriesReference;
+	}
+
+	public void processTimingDataSample(TimingData sample, boolean addToSeries) {
+		if (sample instanceof CallEventData) {
+			processCallEventData((CallEventData) sample, addToSeries);
 		}
 	}
 
-	public List<TimingData> getData() {
-		return data;
+	public void processCallEventData(CallEventData sample, boolean addToSeries) {
+		// 1. Update Component Map.
+		String functionName = sample.getName();
+		String componentName = sample.getContainerName();
+
+		ComponentData componentData = null;
+		if (components == null) {
+			components = new HashMap<String, ComponentData>();
+		}
+
+		if (components.containsKey(componentName)) {
+			componentData = components.get(componentName);
+		} else {
+			componentData = new ComponentData(componentName);
+		}
+
+		ComponentCallData ccd = null;
+		if (!componentData.callData.containsKey(functionName)) {
+			ccd = new ComponentCallData(functionName, componentName);
+		} else {
+			ccd = componentData.callData.get(functionName);
+		}
+
+		// TODO update ?????????? STATISTICS!
+
+		ccd.addCallEvent(sample);
+
+		componentData.callData.put(functionName, ccd);
+		components.put(componentName, componentData);
+
+		if (!addToSeries) {
+			return;
+		}
+
+		// 2. find minimal bounds.
+		Point2D.Double bounds = findViewRangeOfMinimalSet();
+
+		boolean triggerFullRecalculation = false;
+		if (bounds.x != currentBounds.x || bounds.y != currentBounds.y) {
+			currentBounds = bounds;
+			triggerFullRecalculation = true;
+		}
+
+		// 3. add the active view objects for the sample's ComponentCallData.
+		ObservableList<XYChart.Data<Number, String>> dataSeries = dataSeriesReference.get(0).getData();
+
+		if (!triggerFullRecalculation) {
+			if (ccd.getActiveChartData().isEmpty()) {
+				// calculate and add all view elements.
+				for (CallEventData ced : ccd.getCallEventsInRange_MSec(bounds.x, bounds.y)) {
+					ced.parentReference = ccd;
+					XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(ced.getTimestamp2msecs(),
+							ced.getContainerName(), ced);
+					ccd.addActiveChartData(xy);
+					dataSeries.add(xy);
+				}
+			} else {
+				// only process the new event and check if it is within bounds.
+				if (isWithinTimestampBounds(sample.getTimestamp2msecs(), sample.getEndTimestamp2msecs(), bounds.x,
+						bounds.y)) {
+					sample.parentReference = ccd;
+					XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(sample.getTimestamp2msecs(),
+							sample.getContainerName(), sample);
+					ccd.addActiveChartData(xy);
+					dataSeries.add(xy);
+				}
+			}
+		} else {
+			// FULL update every view sample.
+			// loop over all components.
+			for (ComponentData cd : this.components.values()) {
+				// loop over all functions (e.g., updateHook(), etc.).
+				for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
+					ComponentCallData tmp = entry_s_ccd.getValue();
+					// iterate over all view samples.
+					ListIterator<XYChart.Data<Number, String>> iter = tmp.getActiveChartData().listIterator();
+					while (iter.hasNext()) {
+						XYChart.Data<Number, String> viewSample = iter.next();
+						Object extra = viewSample.getExtraValue();
+						if (extra != null && extra instanceof CallEventData) {
+							CallEventData tmpCed = (CallEventData) extra;
+							// remove view sample that is not in range anymore.
+							if (!isWithinTimestampBounds(tmpCed.getTimestamp2msecs(), tmpCed.getEndTimestamp2msecs(),
+									bounds.x, bounds.y)) {
+								dataSeries.remove(viewSample);
+								iter.remove();
+								continue;
+							}
+						}
+					}
+					// loop over samples in bounds and ...
+					for (CallEventData sampleCED : tmp.getCallEventsInRange_MSec(bounds.x, bounds.y)) {
+						// ... check if already represented as view sample.
+						boolean addSampleAsView = true;
+						for (XYChart.Data<Number, String> sampleViewCED : tmp.getActiveChartData()) {
+							if (sampleViewCED.getExtraValue().equals(sampleCED)) {
+								// already a view, skipping!
+								addSampleAsView = false;
+								break;
+							}
+						}
+						if (addSampleAsView) {
+							// if not yet contained, add it.
+							sampleCED.parentReference = tmp;
+							XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(
+									sampleCED.getTimestamp2msecs(), sampleCED.getContainerName(), sampleCED);
+							tmp.addActiveChartData(xy);
+							dataSeries.add(xy);
+						}
+					}
+				}
+			}
+		}
 	}
 
-	public void clearData() {
-		// or this.data = null?
-		this.data = new ArrayList<TimingData>();
-	}
-
-	/**
-	 * Shift the timestamps to get a reasonable starting point. Using the
-	 * minimal(/first) timestamp as base.
-	 *
-	 * @param minimalTimestamp
-	 */
-	public void shiftTimestamps(long minimalTimestamp) {
-		shiftTimestamps(minimalTimestamp, this.data);
+	private boolean isWithinTimestampBounds(double min, double max, double bmin, double bmax) {
+		return (min >= bmin && max <= bmax);
 	}
 
 	public static void shiftTimestamps(long minimalTimestamp, List<TimingData> data) {
@@ -71,80 +183,86 @@ public class DataProcessor {
 		}
 	}
 
-	/**
-	 * Calculate the set of involved components and update the existing set if
-	 * necessary.
-	 */
-	public boolean calculateSetOfComponents() {
-		if (this.data == null) {
-			return false;
-		}
-		HashMap<String, ComponentData> comps = new HashMap<String, ComponentData>();
-
-		for (TimingData timingData : data) {
-			if (timingData instanceof CallEventData) {
-				CallEventData tmp = (CallEventData) timingData;
-				String name = tmp.getName();
-				String containername = tmp.getContainerName();
-
-				// if component is not yet there, create and add it!
-				ComponentData metaComp = null;
-				if (!comps.containsKey(containername)) {
-					metaComp = new ComponentData(containername);
-				} else {
-					metaComp = comps.get(containername);
-				}
-
-				// if ComponentCallData is not yet there, create and add it!
-				ComponentCallData ccd = null;
-				if (!metaComp.callData.containsKey(name)) {
-					// add component call data to meta component
-					ccd = new ComponentCallData(name, containername);
-				} else {
-					ccd = metaComp.callData.get(name);
-				}
-
-				// add call sample
-				ccd.addCallEvent(tmp);
-
-				metaComp.callData.put(name, ccd);
-				comps.put(containername, metaComp);
-			} else if (timingData instanceof PortEventData) {
-				PortEventData tmp = (PortEventData) timingData;
-				String name = tmp.getName();
-				String containername = tmp.getContainerName();
-
-				// if component is not yet there, create and add it!
-				ComponentData metaComp = null;
-				if (!comps.containsKey(containername)) {
-					metaComp = new ComponentData(containername);
-				} else {
-					metaComp = comps.get(containername);
-				}
-
-				// if ComponentPortData is not yet there, create and add it!
-				ComponentPortData cpd = null;
-				if (!metaComp.portData.containsKey(name)) {
-					// add component call data to meta component
-					cpd = new ComponentPortData(name, containername);
-				} else {
-					cpd = metaComp.portData.get(name);
-				}
-
-				// add call sample
-				cpd.addPortEvent(tmp);
-
-				metaComp.portData.put(name, cpd);
-				comps.put(containername, metaComp);
-			}
-		}
-
-		if (comps.size() > 0) {
-			components = comps;
-			return true;
-		}
-		return false;
+	public void dummyTestAddData() {
+		ComponentCallData c = new ComponentCallData("nnn", "dlw");
+		CallEventData ccc = new CallEventData("nnn", "dlw", 0L, 4000000L);
+		c.addCallEvent(ccc);
+		dataSeriesReference.get(0).getData().add(new XYChart.Data<>(0L, "dlw", c));
 	}
+
+//	/**
+//	 * Calculate the set of involved components and update the existing set if
+//	 * necessary.
+//	 */
+//	public static HashMap<String, ComponentData> calculateSetOfComponents(List<TimingData> data) {
+//		if (data == null) {
+//			return null;
+//		}
+//		HashMap<String, ComponentData> comps = new HashMap<String, ComponentData>();
+//
+//		for (TimingData timingData : data) {
+//			if (timingData instanceof CallEventData) {
+//				CallEventData tmp = (CallEventData) timingData;
+//				String name = tmp.getName();
+//				String containername = tmp.getContainerName();
+//
+//				// if component is not yet there, create and add it!
+//				ComponentData metaComp = null;
+//				if (!comps.containsKey(containername)) {
+//					metaComp = new ComponentData(containername);
+//				} else {
+//					metaComp = comps.get(containername);
+//				}
+//
+//				// if ComponentCallData is not yet there, create and add it!
+//				ComponentCallData ccd = null;
+//				if (!metaComp.callData.containsKey(name)) {
+//					// add component call data to meta component
+//					ccd = new ComponentCallData(name, containername);
+//				} else {
+//					ccd = metaComp.callData.get(name);
+//				}
+//
+//				// add call sample
+//				ccd.addCallEvent(tmp);
+//
+//				metaComp.callData.put(name, ccd);
+//				comps.put(containername, metaComp);
+//			} else if (timingData instanceof PortEventData) {
+//				PortEventData tmp = (PortEventData) timingData;
+//				String name = tmp.getName();
+//				String containername = tmp.getContainerName();
+//
+//				// if component is not yet there, create and add it!
+//				ComponentData metaComp = null;
+//				if (!comps.containsKey(containername)) {
+//					metaComp = new ComponentData(containername);
+//				} else {
+//					metaComp = comps.get(containername);
+//				}
+//
+//				// if ComponentPortData is not yet there, create and add it!
+//				ComponentPortData cpd = null;
+//				if (!metaComp.portData.containsKey(name)) {
+//					// add component call data to meta component
+//					cpd = new ComponentPortData(name, containername);
+//				} else {
+//					cpd = metaComp.portData.get(name);
+//				}
+//
+//				// add call sample
+//				cpd.addPortEvent(tmp);
+//
+//				metaComp.portData.put(name, cpd);
+//				comps.put(containername, metaComp);
+//			}
+//		}
+//
+//		if (comps.size() > 0) {
+//			return comps;
+//		}
+//		return null;
+//	}
 
 	/**
 	 * Update iteratively to not do everything every time again over all the
@@ -198,28 +316,28 @@ public class DataProcessor {
 				ComponentCallData tmp = entry.getValue();
 
 				// get mean, variance and std. dev.
-				double mean_startTime = mean(startTime);
-				double var_startTime = variance(mean_startTime, startTime);
-				double std_startTime = stdDev(var_startTime);
+//				double mean_startTime = mean(startTime);
+//				double var_startTime = variance(mean_startTime, startTime);
+//				double std_startTime = stdDev(var_startTime);
 
-				double mean_endTime = mean(endTime);
-				double var_endTime = variance(mean_endTime, endTime);
-				double std_endTime = stdDev(var_endTime);
+//				double mean_endTime = mean(endTime);
+//				double var_endTime = variance(mean_endTime, endTime);
+//				double std_endTime = stdDev(var_endTime);
 
 				double mean_duration = mean(duration);
 				double var_duration = variance(mean_duration, duration);
 				double std_duration = stdDev(var_duration);
 
-				tmp.setMeanStartTime(mean_startTime);
-				tmp.setMeanEndTime(mean_endTime);
+				// tmp.setMeanStartTime(mean_startTime);
+				// tmp.setMeanEndTime(mean_endTime);
 				tmp.setMeanDuration(mean_duration);
 
-				tmp.setVarStartTime(var_startTime);
-				tmp.setVarEndTime(var_endTime);
+				// tmp.setVarStartTime(var_startTime);
+				// tmp.setVarEndTime(var_endTime);
 				tmp.setVarDuration(var_duration);
 
-				tmp.setStdStartTime(std_startTime);
-				tmp.setStdEndTime(std_endTime);
+				// tmp.setStdStartTime(std_startTime);
+				// tmp.setStdEndTime(std_endTime);
 				tmp.setStdDuration(std_duration);
 
 				entry.setValue(tmp);
@@ -249,6 +367,34 @@ public class DataProcessor {
 
 	private static double stdDev(double variance) {
 		return Math.sqrt(variance);
+	}
+
+	/**
+	 * Loop over all components and all functions associated to these
+	 * components, to find all samples within specific minimal bounds.
+	 *
+	 * @return x = minTimestamp, y = maxTimestamp
+	 */
+	public Point2D.Double findViewRangeOfMinimalSet() {
+		double minTimestamp = Double.MAX_VALUE;
+		double maxTimestamp = 0.0;
+		// loop over all components.
+		for (ComponentData cd : this.components.values()) {
+			// loop over all functions (e.g., updateHook(), etc.).
+			for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
+				ComponentCallData tmp = entry_s_ccd.getValue();
+				// use the first sample to determine the bounds.
+				double start = tmp.getCallEvents().get(0).getTimestamp2msecs();
+				if (start < minTimestamp) {
+					minTimestamp = start;
+				}
+				double end = tmp.getCallEvents().get(0).getEndTimestamp2msecs();
+				if (end > maxTimestamp) {
+					maxTimestamp = end;
+				}
+			}
+		}
+		return new Point2D.Double(minTimestamp, maxTimestamp);
 	}
 
 }

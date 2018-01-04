@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javafx.scene.chart.XYChart;
+
 /**
  *
  * @author Dennis Leroy Wigand
@@ -14,17 +16,28 @@ public class ComponentCallData extends TimingData {
 	protected String containerName;
 
 	protected ArrayList<CallEventData> callEvents;
+	protected ArrayList<XYChart.Data<Number, String>> activeChartData;
 
-	// TODO meanStartTime, meanEndTime machen noch keinen Sinn!
-	private double meanStartTime, meanEndTime, meanDuration = 0.0;
-	private double varStartTime, varEndTime, varDuration = 0.0;
-	private double stdStartTime, stdEndTime, stdDuration = 0.0;
+	public ArrayList<XYChart.Data<Number, String>> getActiveChartData() {
+		return activeChartData;
+	}
+
+	public void addActiveChartData(XYChart.Data<Number, String> viewSample) {
+		this.activeChartData.add(viewSample);
+	}
+
+	public void setActiveChartData(ArrayList<XYChart.Data<Number, String>> activeChartData) {
+		if (activeChartData == null) {
+			return;
+		}
+		this.activeChartData = activeChartData;
+	}
+
+	private double meanDuration = 0.0;
+	private double varDuration = 0.0;
+	private double stdDuration = 0.0;
 
 	// protected ArrayList<PortEventData> portEvents;
-
-	public double getMeanStartTime() {
-		return meanStartTime;
-	}
 
 	public ArrayList<CallEventData> getCallEventsInRange_MSec(double min, double max) {
 		ArrayList<CallEventData> ret = new ArrayList<CallEventData>();
@@ -40,58 +53,21 @@ public class ComponentCallData extends TimingData {
 		return getCallEventsInRange_MSec(min * 1e-6, max * 1e-6);
 	}
 
-	public void setMeanStartTime(double meanStartTime) {
-		this.meanStartTime = meanStartTime;
-	}
-
-	public double getMeanEndTime() {
-		return meanEndTime;
-	}
-
-	public void setMeanEndTime(double meanEndTime) {
-		this.meanEndTime = meanEndTime;
-	}
 
 	public double getTimestamp2msecs(boolean average) {
-		if (average) {
-			return meanStartTime * 1e-6;
-		} else if (!callEvents.isEmpty()) {
-			// return callEvents.get(callEvents.size() -
-			// 1).getTimestamp2msecs();
-			return callEvents.get(0).getTimestamp2msecs();
-		}
-		throw new NullPointerException("callEvents is empty!");
+		return callEvents.get(0).getTimestamp2msecs();
 	}
 
 	public long getTimestamp(boolean average) {
-		if (average) {
-			return (long) meanStartTime;
-		} else if (!callEvents.isEmpty()) {
-			// return callEvents.get(callEvents.size() - 1).getTimestamp();
-			return callEvents.get(0).getTimestamp();
-		}
-		throw new NullPointerException("callEvents is empty!");
+		return callEvents.get(0).getTimestamp();
 	}
 
 	public double getEndTimestamp2msecs(boolean average) {
-		if (average) {
-			return meanEndTime * 1e-6;
-		} else if (!callEvents.isEmpty()) {
-			// return callEvents.get(callEvents.size() -
-			// 1).getEndTimestamp2msecs();
-			return callEvents.get(0).getEndTimestamp2msecs();
-		}
-		throw new NullPointerException("callEvents is empty!");
+		return callEvents.get(0).getEndTimestamp2msecs();
 	}
 
 	public long getEndTimestamp(boolean average) {
-		if (average) {
-			return (long) meanEndTime;
-		} else if (!callEvents.isEmpty()) {
-			// return callEvents.get(callEvents.size() - 1).getEndTimestamp();
-			return callEvents.get(0).getEndTimestamp();
-		}
-		throw new NullPointerException("callEvents is empty!");
+		return callEvents.get(0).getEndTimestamp();
 	}
 
 	@Override
@@ -104,44 +80,12 @@ public class ComponentCallData extends TimingData {
 		return getTimestamp2msecs(false);
 	}
 
-	public double getVarStartTime() {
-		return varStartTime;
-	}
-
-	public void setVarStartTime(double varStartTime) {
-		this.varStartTime = varStartTime;
-	}
-
-	public double getVarEndTime() {
-		return varEndTime;
-	}
-
-	public void setVarEndTime(double varEndTime) {
-		this.varEndTime = varEndTime;
-	}
-
 	public double getVarDuration() {
 		return varDuration;
 	}
 
 	public void setVarDuration(double varDuration) {
 		this.varDuration = varDuration;
-	}
-
-	public double getStdStartTime() {
-		return stdStartTime;
-	}
-
-	public void setStdStartTime(double stdStartTime) {
-		this.stdStartTime = stdStartTime;
-	}
-
-	public double getStdEndTime() {
-		return stdEndTime;
-	}
-
-	public void setStdEndTime(double stdEndTime) {
-		this.stdEndTime = stdEndTime;
 	}
 
 	public double getStdDuration() {
@@ -153,30 +97,20 @@ public class ComponentCallData extends TimingData {
 	}
 
 	public ComponentCallData() {
+		activeChartData = new ArrayList<XYChart.Data<Number, String>>();
 		callEvents = new ArrayList<CallEventData>();
-		meanStartTime = 0.0;
-		meanEndTime = 0.0;
 		meanDuration = 0.0;
-		varStartTime = 0.0;
-		varEndTime = 0.0;
 		varDuration = 0.0;
-		stdStartTime = 0.0;
-		stdEndTime = 0.0;
 		stdDuration = 0.0;
 	}
 
 	public ComponentCallData(String name, String containerName) {
 		this.name = name;
 		this.containerName = containerName;
+		activeChartData = new ArrayList<XYChart.Data<Number, String>>();
 		this.callEvents = new ArrayList<CallEventData>();
-		meanStartTime = 0.0;
-		meanEndTime = 0.0;
 		meanDuration = 0.0;
-		varStartTime = 0.0;
-		varEndTime = 0.0;
 		varDuration = 0.0;
-		stdStartTime = 0.0;
-		stdEndTime = 0.0;
 		stdDuration = 0.0;
 	}
 
