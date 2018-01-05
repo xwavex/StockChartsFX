@@ -21,7 +21,7 @@ public class DataProcessor {
 	/**
 	 * SPECIFICATION TODO
 	 */
-	private long wcetDummy = 3000000L;
+	private long wcetDummy = 1000000L;
 
 	protected Point2D.Double currentBounds;
 	/**
@@ -95,27 +95,27 @@ public class DataProcessor {
 		// 4. Add the active view objects for the sample's ComponentPortData.
 		ObservableList<XYChart.Data<Number, String>> dataSeries = dataSeriesReference.get(0).getData();
 
-//		if (!triggerFullRecalculation) {
-			if (cpd.getActiveChartData().isEmpty()) {
-				// calculate and add all view elements.
-				for (PortEventData ped : cpd.getPortEventsInRange_MSec(currentBounds.x, currentBounds.y)) {
-					ped.parentReference = cpd;
-					XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(ped.getTimestamp2msecs(),
-							ped.getContainerName(), ped);
-					cpd.addActiveChartData(xy);
-					dataSeries.add(xy);
-				}
-			} else {
-				// only process the new event and check if it is within bounds.
-
-				if (isWithinTimestampBounds(sample.getTimestamp2msecs(), currentBounds.x, currentBounds.y)) {
-					sample.parentReference = cpd;
-					XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(sample.getTimestamp2msecs(),
-							sample.getContainerName(), sample);
-					cpd.addActiveChartData(xy);
-					dataSeries.add(xy);
-				}
+		// if (!triggerFullRecalculation) {
+		if (cpd.getActiveChartData().isEmpty()) {
+			// calculate and add all view elements.
+			for (PortEventData ped : cpd.getPortEventsInRange_MSec(currentBounds.x, currentBounds.y)) {
+				ped.parentReference = cpd;
+				XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(ped.getTimestamp2msecs(),
+						ped.getContainerName(), ped);
+				cpd.addActiveChartData(xy);
+				dataSeries.add(xy);
 			}
+		} else {
+			// only process the new event and check if it is within bounds.
+
+			if (isWithinTimestampBounds(sample.getTimestamp2msecs(), currentBounds.x, currentBounds.y)) {
+				sample.parentReference = cpd;
+				XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(sample.getTimestamp2msecs(),
+						sample.getContainerName(), sample);
+				cpd.addActiveChartData(xy);
+				dataSeries.add(xy);
+			}
+		}
 	}
 
 	public void processCallEventData(CallEventData sample, boolean addToSeries) {
@@ -144,12 +144,9 @@ public class DataProcessor {
 
 		ccd.addCallEvent(sample);
 
-		// 2. Calculate basic statistics.
-		ccd.updateStatistics(sample);
-		calculateBasicStatistics(ccd);
+
 		// 2B. SPECIFICATIONS TODO
 		ccd.wcet = wcetDummy;
-
 
 		componentData.callData.put(functionName, ccd);
 		components.put(componentName, componentData);
@@ -157,6 +154,10 @@ public class DataProcessor {
 		if (!addToSeries) {
 			return;
 		}
+
+		// 2. Calculate basic statistics.
+			ccd.updateStatistics(sample);
+			calculateBasicStatistics(ccd);
 
 		// 3. Find minimal bounds.
 		Point2D.Double bounds = findViewRangeOfMinimalSet();
@@ -182,8 +183,8 @@ public class DataProcessor {
 				}
 			} else {
 				// only process the new event and check if it is within bounds.
-				if (isWithinTimestampBounds(sample.getTimestamp2msecs(), sample.getEndTimestamp2msecs(), currentBounds.x,
-						currentBounds.y)) {
+				if (isWithinTimestampBounds(sample.getTimestamp2msecs(), sample.getEndTimestamp2msecs(),
+						currentBounds.x, currentBounds.y)) {
 					sample.parentReference = ccd;
 					XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(sample.getTimestamp2msecs(),
 							sample.getContainerName(), sample);
@@ -247,7 +248,8 @@ public class DataProcessor {
 						if (extra != null && extra instanceof PortEventData) {
 							PortEventData tmpCed = (PortEventData) extra;
 							// remove view sample that is not in range anymore.
-							if (!isWithinTimestampBounds(tmpCed.getTimestamp2msecs(), currentBounds.x, currentBounds.y)) {
+							if (!isWithinTimestampBounds(tmpCed.getTimestamp2msecs(), currentBounds.x,
+									currentBounds.y)) {
 								dataSeries.remove(viewSample);
 								iter.remove();
 								continue;
@@ -276,6 +278,85 @@ public class DataProcessor {
 					}
 				}
 			}
+		}
+	}
+
+	public void triggerRecalculation() {
+		// 3. Find minimal bounds.
+		currentBounds = findViewRangeOfMinimalSet();
+		System.out.println("Bounds " + currentBounds.x + " <=> " + currentBounds.y);
+		// 4. Add the active view objects for the sample's ComponentCallData.
+		ObservableList<XYChart.Data<Number, String>> dataSeries = dataSeriesReference.get(0).getData();
+		// 3. Find minimal bounds.
+//		Point2D.Double bounds = findViewRangeOfMinimalSet();
+		// FULL update every view sample.
+		// loop over all components.
+		int iComp = 0;
+		for (ComponentData cd : this.components.values()) {
+
+			// loop over all functions (e.g., updateHook(), etc.).
+			for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
+				ComponentCallData tmp = entry_s_ccd.getValue();
+
+				System.out.println("Processing Hook: " + tmp.getName());
+
+				calculateBasicStatistics(tmp);
+
+				tmp.getActiveChartData().clear();
+
+				ArrayList<CallEventData> aaa = tmp.getCallEventsInRange_MSec(currentBounds.x, currentBounds.y);
+				System.out.println("in bounds size " + aaa.size());
+				// loop over samples in bounds and ...
+				for (CallEventData sampleCED : aaa) {
+					sampleCED.parentReference = tmp;
+					XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(
+							sampleCED.getTimestamp2msecs(), sampleCED.getContainerName(), sampleCED);
+					tmp.addActiveChartData(xy);
+					dataSeries.add(xy);
+				}
+			}
+
+			// loop over all ports.
+			for (Entry<String, ComponentPortData> entry_s_ccd : cd.portData.entrySet()) {
+				ComponentPortData tmp = entry_s_ccd.getValue();
+				// iterate over all view samples.
+				ListIterator<XYChart.Data<Number, String>> iter = tmp.getActiveChartData().listIterator();
+				while (iter.hasNext()) {
+					XYChart.Data<Number, String> viewSample = iter.next();
+					Object extra = viewSample.getExtraValue();
+					if (extra != null && extra instanceof PortEventData) {
+						PortEventData tmpCed = (PortEventData) extra;
+						// remove view sample that is not in range anymore.
+						if (!isWithinTimestampBounds(tmpCed.getTimestamp2msecs(), currentBounds.x, currentBounds.y)) {
+							dataSeries.remove(viewSample);
+							iter.remove();
+							continue;
+						}
+					}
+				}
+				// loop over samples in bounds and ...
+				for (PortEventData samplePED : tmp.getPortEventsInRange_MSec(currentBounds.x, currentBounds.y)) {
+					// ... check if already represented as view sample.
+					boolean addSampleAsView = true;
+					for (XYChart.Data<Number, String> sampleViewPED : tmp.getActiveChartData()) {
+						if (sampleViewPED.getExtraValue().equals(samplePED)) {
+							// already a view, skipping!
+							addSampleAsView = false;
+							break;
+						}
+					}
+					if (addSampleAsView) {
+						// if not yet contained, add it.
+						samplePED.parentReference = tmp;
+						XYChart.Data<Number, String> xy = new XYChart.Data<Number, String>(
+								samplePED.getTimestamp2msecs(), samplePED.getContainerName(), samplePED);
+						tmp.addActiveChartData(xy);
+						dataSeries.add(xy);
+					}
+				}
+			}
+			iComp++;
+			System.out.println("Finished Processing Component " + iComp + " of " + this.components.size());
 		}
 	}
 
@@ -506,6 +587,7 @@ public class DataProcessor {
 			// loop over all functions (e.g., updateHook(), etc.).
 			for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
 				ComponentCallData tmp = entry_s_ccd.getValue();
+				System.out.println("For " + cd.getName() + " check hook " + tmp.getName());
 				// use the first sample to determine the bounds.
 				double start = tmp.getCallEvents().get(0).getTimestamp2msecs();
 				if (start < minTimestamp) {
@@ -515,6 +597,7 @@ public class DataProcessor {
 				if (end > maxTimestamp) {
 					maxTimestamp = end;
 				}
+				System.out.println("Consider " + tmp.getCallEvents().get(0).getTimestamp() + " && " + tmp.getCallEvents().get(0).getEndTimestamp());
 			}
 		}
 		return new Point2D.Double(minTimestamp, maxTimestamp);
@@ -535,6 +618,10 @@ public class DataProcessor {
 		ccd.setMeanDuration(mean_duration);
 		ccd.setVarDuration(var_duration);
 		ccd.setStdDuration(std_duration);
+
+		System.out.println("mean_duration = " + mean_duration);
+		System.out.println("var_duration = " + var_duration);
+		System.out.println("std_duration = " + std_duration);
 	}
 
 }

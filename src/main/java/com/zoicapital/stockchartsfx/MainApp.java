@@ -30,8 +30,9 @@ public class MainApp extends Application {
 	public void start(Stage stage) throws Exception {
 		// read JSON data
 		JSONDataParser jdp = new JSONDataParser();
-		List<TimingData> data = jdp.parse("/home/dwigand/code/cogimon/CoSimA/framework-extensions/rtt-core-extensions/build/reports.dat");
-
+//		List<TimingData> data = jdp.parse("/home/dwigand/code/cogimon/CoSimA/framework-extensions/rtt-core-extensions/build/reports.dat");
+//		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reports.dat");
+		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsWOtimesync.dat");
 		// analyze data
 		DataProcessor dp = new DataProcessor();
 
@@ -44,11 +45,18 @@ public class MainApp extends Application {
 		// enable the data processor to work on the data series
 
 //		dp.dummyTestAddData();
-
+		System.out.println("READING finished = " + data.size());
+		int i = 0;
 		for (TimingData timingData : data) {
-			dp.processTimingDataSample(timingData, true);
+			dp.processTimingDataSample(timingData, false);
+			i++;
+			if (i % 10000 == 0) {
+				System.out.println("Processed " + i + " of " + data.size());
+			}
 		}
+		System.out.println("PROCESSING finished");
 //		dp.printReport();
+		dp.triggerRecalculation();
 
 
 		Scene scene = new Scene(candleStickChart);

@@ -81,10 +81,10 @@ public class JSONDataParser {
 							minimalTimestamp = call_time;
 						}
 
-						// TODO dummy remove
-						 if (call_duration - call_time < 500000L) {
-						 call_duration = call_duration + (1 + (int)(Math.random() * 5))*1000000L;
-						 }
+//						// TODO dummy remove
+//						 if (call_duration - call_time < 500000L) {
+//						 call_duration = call_duration + (1 + (int)(Math.random() * 5))*1000000L;
+//						 }
 
 						data.add(new CallEventData(call_name, container_name, call_time, call_duration));
 					} else {
