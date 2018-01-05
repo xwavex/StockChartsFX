@@ -291,6 +291,8 @@ public class CandleStickChart extends XYChart<Number, String> {
 			return;
 		}
 
+		double blockHeight = 20;
+
 		// update candle positions
 		for (int seriesIndex = 0; seriesIndex < getData().size(); seriesIndex++) {
 			Series<Number, String> series = getData().get(seriesIndex);
@@ -310,11 +312,6 @@ public class CandleStickChart extends XYChart<Number, String> {
 				Node itemNode = item.getNode();
 				TimingData bar = (TimingData) item.getExtraValue();
 				if (itemNode instanceof TimingBlock && item.getYValue() != null) {
-//
-//
-//					x = getXAxis()
-//							.getDisplayPosition(((ComponentCallData) item.getExtraValue()).getTimestamp2msecs(average));
-
 					TimingBlock tBlock = (TimingBlock) itemNode;
 					// update candle
 					// candle.update(close - y, high - y, low - y, candleWidth);
@@ -333,14 +330,16 @@ public class CandleStickChart extends XYChart<Number, String> {
 //					System.out.println("dur   = " + (((ComponentCallData) item.getExtraValue()).getEndTimestamp2msecs(average)
 //							- ((ComponentCallData) item.getExtraValue()).getTimestamp2msecs(average)));
 
+
+
 					double dX = endX - x;
 //					System.out.println("X = " + x);
 //					System.out.println("endX = " + endX);
 //					System.out.println("dX = " + dX);
 					if (dX < 1) {
-						tBlock.update(0, -10, 1, 20, xAxis, true);
+						tBlock.update(0, -blockHeight, 1, blockHeight, xAxis, true);
 					} else {
-						tBlock.update(0, -10, dX, 20, xAxis, true);
+						tBlock.update(0, -blockHeight, dX, blockHeight, xAxis, true);
 					}
 					// update tooltip content
 					// tBlock.updateTooltip(bar.getOpen(), bar.getClose(),
@@ -355,7 +354,8 @@ public class CandleStickChart extends XYChart<Number, String> {
 					tBlock.toBack();
 				} else if (itemNode instanceof PortAccessIndicator && item.getYValue() != null) {
 					PortAccessIndicator pAI = (PortAccessIndicator) itemNode;
-					pAI.update();
+					pAI.update(blockHeight, xAxis);
+					pAI.toFront();
 					pAI.setLayoutX(x);
 					pAI.setLayoutY(y);
 				}
@@ -471,7 +471,7 @@ public class CandleStickChart extends XYChart<Number, String> {
 			item.setNode(node);
 		} else if (item.getExtraValue() instanceof PortEventData) {
 			PortEventData tmp = (PortEventData) item.getExtraValue();
-			node = new PortAccessIndicator("series" + seriesIndex, "data" + itemIndex, tmp);
+			node = new PortAccessIndicator(tmp);
 			item.setNode(node);
 		}
 		return node;

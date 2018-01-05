@@ -2,56 +2,103 @@ package de.dlw.timing.viz.viewmodel;
 
 import de.dlw.timing.viz.data.PortEventData;
 import de.dlw.timing.viz.data.PortEventData.CallPortType;
+import de.dlw.timing.viz.viewmodel.tooltip.TimingPortTooltip;
+import de.dlw.timing.viz.viewmodel.tooltip.ToolTipAlive;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
+import javafx.scene.chart.Axis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Line;
 
 public class PortAccessIndicator extends Group {
 
 	private final Line highLowLine = new Line();
-	private final Region bar = new Region();
-	private String seriesStyleClass;
-	private String dataStyleClass;
 	private boolean inputport = true;
+
 	protected PortEventData portEventData;
-	// private final Tooltip tooltip = new Tooltip();
 
-	public PortAccessIndicator(String seriesStyleClass, String dataStyleClass, PortEventData pedRef) {
+	private double maxStrokeWidth = 5.0;
+	private double minStrokeWidth = 0.8;
+	private double maxResolution = 10.0; // ms
+
+	private double currentblockheight = 0.0;
+
+	private final ToolTipAlive tooltip = new ToolTipAlive();
+	private TimingPortTooltip tooltipContent;
+
+	private TimingPortTooltip additionalInformation;
+
+	public PortAccessIndicator(PortEventData pedRef) {
 		setAutoSizeChildren(false);
-		getChildren().addAll(bar, highLowLine);
-		this.seriesStyleClass = seriesStyleClass;
-		this.dataStyleClass = dataStyleClass;
+		additionalInformation = new TimingPortTooltip();
+		additionalInformation.setVisible(false);
+		additionalInformation.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				additionalInformation.setVisible(false);
+			}
+		});
+
+		getChildren().addAll(highLowLine, additionalInformation);
 		this.portEventData = pedRef;
 		updateStyleClasses();
-		// tooltip.setGraphic(new TooltipContent());
-		// Tooltip.install(bar, tooltip);
+
+		tooltipContent = new TimingPortTooltip();
+		tooltip.setGraphic(tooltipContent);
+		updateTooltip();
+		Tooltip.install(highLowLine, tooltip);
+
+
+		highLowLine.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				if (additionalInformation.isVisible()) {
+					additionalInformation.setVisible(false);
+				} else {
+					updateTooltip();
+					additionalInformation.resizeRelocate(0, currentblockheight, 250, 60);
+					additionalInformation.setVisible(true);
+				}
+			}
+		});
 	}
 
-	public void setSeriesAndDataStyleClasses(String seriesStyleClass, String dataStyleClass, PortEventData pedRef) {
-		this.seriesStyleClass = seriesStyleClass;
-		this.dataStyleClass = dataStyleClass;
+	public void setSeriesAndDataStyleClasses(PortEventData pedRef) {
 		this.portEventData = pedRef;
 		updateStyleClasses();
 	}
 
-	public void update() {
-		// public void update(double highOffset, double lowOffset) {
-		bar.resizeRelocate(0, 5, 15, 15);
+	public void update(double blockheight, NumberAxis xAxis) {
+		currentblockheight = blockheight;
 		if (this.inputport) {
-			highLowLine.setStartY(-20);
-			highLowLine.setEndY(0);
+			highLowLine.setStartY(-currentblockheight * 1.5);
+			highLowLine.setEndY(-currentblockheight * 0.5);
 		} else {
-			highLowLine.setStartY(0);
-			highLowLine.setEndY(20);
+			highLowLine.setStartY(-currentblockheight * 0.5);
+			highLowLine.setEndY(currentblockheight * 0.5);
 		}
 
+		// 10 ms = 100% max scale
+		double strokeWidth = maxStrokeWidth * (maxResolution / (xAxis.getUpperBound() - xAxis.getLowerBound()));
+		if (strokeWidth < minStrokeWidth) {
+			strokeWidth = minStrokeWidth;
+		} else if (strokeWidth > maxStrokeWidth) {
+			strokeWidth = maxStrokeWidth;
+		}
+		highLowLine.setStrokeWidth(strokeWidth);
 	}
 
-	// public void updateTooltip(double open, double close, double high, double
-	// low) {
-	// TooltipContent tooltipContent = (TooltipContent) tooltip.getGraphic();
-	// tooltipContent.update(open, close, high, low);
-	// }
+	public void updateTooltip() {
+		TimingPortTooltip tooltipContent = (TimingPortTooltip) tooltip.getGraphic();
+		tooltipContent.update(portEventData.getName(), portEventData.getCallType().toString(),
+				portEventData.getTimestamp2msecs());
+		if (additionalInformation != null) {
+			additionalInformation.update(portEventData.getName(), portEventData.getCallType().toString(),
+					portEventData.getTimestamp2msecs());
+		}
+	}
 
 	private void updateStyleClasses() {
 		// TODO color for data

@@ -18,6 +18,11 @@ import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
 
 public class DataProcessor {
+	/**
+	 * SPECIFICATION TODO
+	 */
+	private long wcetDummy = 3000000L;
+
 	protected Point2D.Double currentBounds;
 	/**
 	 * Component model.
@@ -140,7 +145,11 @@ public class DataProcessor {
 		ccd.addCallEvent(sample);
 
 		// 2. Calculate basic statistics.
+		ccd.updateStatistics(sample);
 		calculateBasicStatistics(ccd);
+		// 2B. SPECIFICATIONS TODO
+		ccd.wcet = wcetDummy;
+
 
 		componentData.callData.put(functionName, ccd);
 		components.put(componentName, componentData);

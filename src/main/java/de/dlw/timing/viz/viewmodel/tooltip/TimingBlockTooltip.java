@@ -30,10 +30,10 @@ public class TimingBlockTooltip extends GridPane {
         getChildren().addAll(name, call_name, container, call_container, start, start_time, end, end_time);
     }
 
-    public void update(String name, String container, long startTime, long endTime) {
+    public void update(String name, String container, double startTime, double endTime) {
         call_name.setText(name);
         call_container.setText(container);
-        start_time.setText(Long.toString(startTime));
-        end_time.setText(Long.toString(endTime));
+        start_time.setText(Double.toString(startTime) + " ms");
+        end_time.setText(Double.toString(endTime) + " ms");
     }
 }

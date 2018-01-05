@@ -1,39 +1,52 @@
 package de.dlw.timing.viz.viewmodel;
 
+import java.text.DecimalFormat;
+
 import de.dlw.timing.viz.data.CallEventData;
 import de.dlw.timing.viz.data.ComponentCallData;
 import de.dlw.timing.viz.viewmodel.tooltip.TimingBlockTooltip;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.chart.Axis;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Region;
+import javafx.scene.shape.Line;
 
 public class TimingBlock extends Group {
 
+	private final Region specificationWCET = new Region();
+	private final Line meanDurationLine = new Line();
+	private final Region wmeDuration = new Region();
+	private final Region stdRegion = new Region();
 	private final Region bar = new Region();
 	private String seriesStyleClass;
 	private String dataStyleClass;
 	private boolean openAboveClose = true;
 	private final Tooltip tooltip = new Tooltip();
 	private Label lblName;
+	private Label lblDuration;
+	private DecimalFormat df = new DecimalFormat("#.00");
 
 	public CallEventData cedReference = null;
 
-//	private final Region stdRegion = new Region();
 
 	public TimingBlock(String seriesStyleClass, String dataStyleClass, CallEventData ced) {
 		setAutoSizeChildren(false);
 		this.cedReference = ced;
 		lblName = new Label(this.cedReference.getName());
-		getChildren().addAll(bar, lblName);
+		lblName.setAlignment(Pos.CENTER);
+
+		lblDuration = new Label("" + df.format((this.cedReference.getEndTimestamp2msecs()-this.cedReference.getTimestamp2msecs())) + " ms");
+		lblDuration.setAlignment(Pos.TOP_CENTER);
+		getChildren().addAll(bar, lblName, wmeDuration, specificationWCET, lblDuration, stdRegion, meanDurationLine);
 		this.seriesStyleClass = seriesStyleClass;
 		this.dataStyleClass = dataStyleClass;
 		updateStyleClasses();
 		TimingBlockTooltip tmpToolTip = new TimingBlockTooltip();
 		tmpToolTip.update(this.cedReference.getName(), this.cedReference.getContainerName(),
-				this.cedReference.getTimestamp(), this.cedReference.getEndTimestamp());
+				this.cedReference.getTimestamp2msecs(), this.cedReference.getEndTimestamp2msecs());
 		tooltip.setGraphic(tmpToolTip);
 		Tooltip.install(bar, tooltip);
 		Tooltip.install(lblName, tooltip);
@@ -45,27 +58,43 @@ public class TimingBlock extends Group {
 		updateStyleClasses();
 	}
 
-	public void update(double closeOffset, double highOffset, double lowOffset, double candleWidth, Axis<Number> xAxis,
+	public void update(double closeOffset, double highOffset, double lowOffset, double candleWidth, NumberAxis xAxis,
 			boolean use_msecs) {
 		openAboveClose = closeOffset > 0;
 		updateStyleClasses();
-		// highLowLine.setStartY(highOffset);
-		// highLowLine.setEndY(lowOffset);
-		// if (candleWidth == -1) {
-		// candleWidth = bar.prefWidth(-1);
-		// }
-		// if (openAboveClose) {
-		// bar.resizeRelocate(-candleWidth / 2, 0, candleWidth, closeOffset);
-		// } else {
-		// bar.resizeRelocate(-candleWidth / 2, closeOffset, candleWidth,
-		// closeOffset * -1);
-		// }
 
 		lblName.toFront();
 		lblName.resizeRelocate(closeOffset, highOffset, lowOffset, candleWidth);
-		lblName.setAlignment(Pos.CENTER);
 
 		bar.resizeRelocate(closeOffset, highOffset, lowOffset, candleWidth);
+
+		double wmed2msec = cedReference.parentReference.getWorstMeasuredExecutionDuration2msecs();
+		double cedST2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs());
+		if (wmed2msec > 0.0) {
+			double wmedET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + wmed2msec);
+			double dXwmed2msec = wmedET2msec - cedST2msec;
+			wmeDuration.resizeRelocate(closeOffset, highOffset, dXwmed2msec, candleWidth);
+			wmeDuration.toBack();
+			wmeDuration.setVisible(true);
+		} else {
+			wmeDuration.setVisible(false);
+		}
+
+		double s_wcet_2msec = cedReference.parentReference.getWcet2msec();
+		if (s_wcet_2msec > 0.0) {
+			double wcetET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + s_wcet_2msec);
+			double endWcet2msec = wcetET2msec - cedST2msec;
+			specificationWCET.resizeRelocate(endWcet2msec, highOffset-6, 5, candleWidth+12);
+			specificationWCET.toFront();
+			specificationWCET.setVisible(true);
+		} else {
+			specificationWCET.setVisible(false);
+		}
+
+//		lblDuration.setStyle("-fx-background-color:#FF0000");
+		lblDuration.setText("" + df.format((this.cedReference.getEndTimestamp2msecs()-this.cedReference.getTimestamp2msecs())) + " ms");
+		lblDuration.resizeRelocate(closeOffset-lowOffset*0.25, highOffset-candleWidth, lowOffset*1.5, candleWidth);
+
 
 		// System.out.println("Real s : "+ closeOffset + ", e : " + (closeOffset
 		// + lowOffset));
@@ -75,10 +104,30 @@ public class TimingBlock extends Group {
 //				getChildren().add(stdRegion);
 //			}
 //
-//			stdRegion.toFront();
-//
-//			double mDuration = 0.0;
-//			double minStdDuration = 0.0;
+			double mDuration = this.cedReference.parentReference.getMeanDuration() * 1e-6;
+			double minStdDuration = this.cedReference.parentReference.getStdDuration() * 1e-6;
+			if (mDuration > 0.0 && minStdDuration > 0.0) {
+				double stdST2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration - minStdDuration) - cedST2msec;
+				double stdET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration + minStdDuration) - cedST2msec - stdST2msec;
+				double meanDuration2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration) - cedST2msec;
+
+				meanDurationLine.setStartX(meanDuration2msec);
+				meanDurationLine.setEndX(meanDuration2msec);
+				meanDurationLine.setStartY(-2.5);
+				meanDurationLine.setEndY(5+2.5);
+
+				stdRegion.resizeRelocate(stdST2msec, 0, stdET2msec, 5);
+				stdRegion.toBack();
+				meanDurationLine.toFront();
+				stdRegion.setVisible(true);
+				meanDurationLine.setVisible(true);
+			} else {
+				stdRegion.setVisible(false);
+				meanDurationLine.setVisible(false);
+			}
+
+//			double mDuration = xAxis.getDisplayPosition(this.cedReference.parentReference.getMeanDuration() * 1e-6);
+//			double minStdDuration = xAxis.getDisplayPosition(this.cedReference.parentReference.getStdDuration() * 1e-6);
 //
 //			double endPoint_inChartCoord = (closeOffset + lowOffset);
 //			// System.out.println("endPoint_inChartCoord = " +
@@ -118,9 +167,9 @@ public class TimingBlock extends Group {
 //		}
 	}
 
-	public void updateTooltip(String name, String container, long startTime, long endTime) {
+	public void updateTooltip(String name, String container, double startTimeMS, double endTimeMS) {
 		TimingBlockTooltip tooltipContent = (TimingBlockTooltip) tooltip.getGraphic();
-		tooltipContent.update(name, container, startTime, endTime);
+		tooltipContent.update(name, container, startTimeMS, endTimeMS);
 	}
 
 	private void updateStyleClasses() {
@@ -131,6 +180,16 @@ public class TimingBlock extends Group {
 		bar.getStyleClass().setAll("candlestick-bar", seriesStyleClass, dataStyleClass,
 				openAboveClose ? "open-above-close" : "close-above-open");
 
-//		stdRegion.getStyleClass().setAll("stdregion-bar");
+		wmeDuration.getStyleClass().setAll("wmed-bar");
+
+		if (cedReference.parentReference.getWorstMeasuredExecutionDuration() > cedReference.parentReference.getWcet()) {
+			// wcet violated
+			specificationWCET.getStyleClass().setAll("specification","wcet-bar", "violated");
+		} else {
+			specificationWCET.getStyleClass().setAll("specification","wcet-bar");
+		}
+
+		stdRegion.getStyleClass().setAll("stdregion-bar");
+		meanDurationLine.getStyleClass().setAll("mean-duration-line");
 	}
 }

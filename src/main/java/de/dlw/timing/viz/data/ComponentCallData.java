@@ -18,6 +18,30 @@ public class ComponentCallData extends TimingData {
 	protected ArrayList<CallEventData> callEvents;
 	protected ArrayList<XYChart.Data<Number, String>> activeChartData;
 
+	private double meanDuration = 0.0;
+	private double varDuration = 0.0;
+	private double stdDuration = 0.0;
+
+	/**
+	 * SPECIFICATIONS TODO
+	 */
+	public long wcet = 0L;
+
+
+	public long getWcet() {
+		return wcet;
+	}
+
+	public double getWcet2msec() {
+		return wcet * 1e-6;
+	}
+
+	public void setWcet(long wcet) {
+		this.wcet = wcet;
+	}
+
+	private long worstMeasuredExecutionDuration = 0L;
+
 	public ArrayList<XYChart.Data<Number, String>> getActiveChartData() {
 		return activeChartData;
 	}
@@ -32,12 +56,6 @@ public class ComponentCallData extends TimingData {
 		}
 		this.activeChartData = activeChartData;
 	}
-
-	private double meanDuration = 0.0;
-	private double varDuration = 0.0;
-	private double stdDuration = 0.0;
-
-	// protected ArrayList<PortEventData> portEvents;
 
 	public ArrayList<CallEventData> getCallEventsInRange_MSec(double min, double max) {
 		ArrayList<CallEventData> ret = new ArrayList<CallEventData>();
@@ -118,6 +136,14 @@ public class ComponentCallData extends TimingData {
 		return name;
 	}
 
+	public long getWorstMeasuredExecutionDuration() {
+		return worstMeasuredExecutionDuration;
+	}
+
+	public double getWorstMeasuredExecutionDuration2msecs() {
+		return worstMeasuredExecutionDuration * 1e-6;
+	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -126,17 +152,17 @@ public class ComponentCallData extends TimingData {
 		callEvents.add(ced);
 	}
 
-	public void addCallEvents(Collection<CallEventData> ceds) {
-		callEvents.addAll(ceds);
+	public void updateStatistics(CallEventData newAlreadyAddedSample) {
+		// update worstMeasuredExecutionDuration
+		long duration = newAlreadyAddedSample.getEndTimestamp() - newAlreadyAddedSample.getTimestamp();
+		if (duration > worstMeasuredExecutionDuration) {
+			worstMeasuredExecutionDuration = duration;
+		}
 	}
 
-	// public void addPortEvent(PortEventData ped) {
-	// portEvents.add(ped);
-	// }
-	//
-	// public void addPortEvents(Collection<PortEventData> peds) {
-	// portEvents.addAll(peds);
-	// }
+//	public void addCallEvents(Collection<CallEventData> ceds) {
+//		callEvents.addAll(ceds);
+//	}
 
 	// @Override
 	// public String toString() {
@@ -151,10 +177,6 @@ public class ComponentCallData extends TimingData {
 	public ArrayList<CallEventData> getCallEvents() {
 		return callEvents;
 	}
-
-	// public ArrayList<PortEventData> getPortEvents() {
-	// return portEvents;
-	// }
 
 	public String getContainerName() {
 		return containerName;
@@ -171,18 +193,6 @@ public class ComponentCallData extends TimingData {
 	public void setMeanDuration(double meanDuration) {
 		this.meanDuration = meanDuration;
 	}
-
-	// public long getEndTimestamp() {
-	// return endTimestamp;
-	// }
-	//
-	// public void setEndTimestamp(long endTimestamp) {
-	// this.endTimestamp = endTimestamp;
-	// }
-	//
-	// public double getEndTimestamp2msecs() {
-	// return endTimestamp * 1e-6;
-	// }
 
 	// @Override
 	// public int hashCode() {
