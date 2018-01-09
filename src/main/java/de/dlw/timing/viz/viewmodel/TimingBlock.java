@@ -2,12 +2,13 @@ package de.dlw.timing.viz.viewmodel;
 
 import java.text.DecimalFormat;
 
+import de.dlw.timing.viz.data.ActivitySpecification;
 import de.dlw.timing.viz.data.CallEventData;
-import de.dlw.timing.viz.data.ComponentCallData;
+import de.dlw.timing.viz.data.CallSpecification;
+import de.dlw.timing.viz.data.ComponentSpecification;
 import de.dlw.timing.viz.viewmodel.tooltip.TimingBlockTooltip;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.chart.Axis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -80,16 +81,36 @@ public class TimingBlock extends Group {
 			wmeDuration.setVisible(false);
 		}
 
-		double s_wcet_2msec = cedReference.parentReference.getWcet2msec();
-		if (s_wcet_2msec > 0.0) {
-			double wcetET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + s_wcet_2msec);
-			double endWcet2msec = wcetET2msec - cedST2msec;
-			specificationWCET.resizeRelocate(endWcet2msec, highOffset-6, 5, candleWidth+12);
-			specificationWCET.toFront();
-			specificationWCET.setVisible(true);
-		} else {
-			specificationWCET.setVisible(false);
+
+		ComponentSpecification csp = cedReference.parentReference.parentComponent.getComponentSpecs();
+		if (csp != null) {
+			CallSpecification call = csp.calls.get(this.cedReference.getName());
+			if (call != null) {
+				double s_wcet_2msec = call.wcet * 1e-6;
+				if (s_wcet_2msec > 0.0) {
+					if (cedReference.parentReference.getWorstMeasuredExecutionDuration() > call.wcet) {
+						// wcet violated
+						specificationWCET.getStyleClass().setAll("specification","wcet-bar", "violated");
+					} else {
+						specificationWCET.getStyleClass().setAll("specification","wcet-bar");
+					}
+
+					double wcetET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + s_wcet_2msec);
+					double endWcet2msec = wcetET2msec - cedST2msec;
+					specificationWCET.resizeRelocate(endWcet2msec, highOffset-6, 5, candleWidth+12);
+					specificationWCET.toFront();
+					specificationWCET.setVisible(true);
+				} else {
+					specificationWCET.setVisible(false);
+				}
+			}
+//			ActivitySpecification act = csp.activity;
+//			if (act != null && act.color != null) {
+//				System.out.println("-fx-border-color: rgb("+ act.color.getRed() + ", " + act.color.getGreen() + ", " + act.color.getBlue() + ");");
+//				bar.setStyle("-fx-border-color: rgb("+ act.color.getRed() + ", " + act.color.getGreen() + ", " + act.color.getBlue() + ");");
+//			}
 		}
+
 
 //		lblDuration.setStyle("-fx-background-color:#FF0000");
 		lblDuration.setText("" + df.format((this.cedReference.getEndTimestamp2msecs()-this.cedReference.getTimestamp2msecs())) + " ms");
@@ -173,23 +194,25 @@ public class TimingBlock extends Group {
 	}
 
 	private void updateStyleClasses() {
-		getStyleClass().setAll("candlestick-candle", seriesStyleClass, dataStyleClass);
-		// highLowLine.getStyleClass().setAll("candlestick-line",
-		// seriesStyleClass, dataStyleClass,
-		// openAboveClose ? "open-above-close" : "close-above-open");
-		bar.getStyleClass().setAll("candlestick-bar", seriesStyleClass, dataStyleClass,
-				openAboveClose ? "open-above-close" : "close-above-open");
+		getStyleClass().setAll("candlestick-candle");
+
+		bar.getStyleClass().setAll("candlestick-bar");
 
 		wmeDuration.getStyleClass().setAll("wmed-bar");
 
-		if (cedReference.parentReference.getWorstMeasuredExecutionDuration() > cedReference.parentReference.getWcet()) {
-			// wcet violated
-			specificationWCET.getStyleClass().setAll("specification","wcet-bar", "violated");
-		} else {
-			specificationWCET.getStyleClass().setAll("specification","wcet-bar");
-		}
-
 		stdRegion.getStyleClass().setAll("stdregion-bar");
 		meanDurationLine.getStyleClass().setAll("mean-duration-line");
+
+		ComponentSpecification csp = cedReference.parentReference.parentComponent.getComponentSpecs();
+		if (csp != null) {
+			ActivitySpecification act = csp.activity;
+			if (act != null && act.color != null) {
+				bar.setStyle("-fx-border-color: " + act.color.toString().replaceFirst("0x", "#"));
+			} else {
+				bar.setStyle("-fx-border-color: #000000");
+			}
+		} else {
+			bar.setStyle("-fx-border-color: #000000");
+		}
 	}
 }

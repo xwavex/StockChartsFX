@@ -78,6 +78,7 @@ public class CandleStickChart extends XYChart<Number, String> {
 	protected NumberAxis xAxis;
 	private double oldMouseX;
 	protected DataProcessor dataProcessor;
+	private double currentTickUnit = -1;
 
 //	ComponentCallData c; // TODO test
 //	CallEventData ccc; // TODO test
@@ -145,6 +146,11 @@ public class CandleStickChart extends XYChart<Number, String> {
 					return;
 				}
 
+				if (xAxis.isAutoRanging()) {
+					currentTickUnit = xAxis.getTickUnit();
+					xAxis.autoRangingProperty().set(false);
+				}
+
 //				// TODO test adding new one
 //				ComponentCallData c = new ComponentCallData("nnn", "dlw");
 //				c.addCallEvent(new CallEventData("nnn", "dlw", 0L, 4000000000L));
@@ -155,21 +161,35 @@ public class CandleStickChart extends XYChart<Number, String> {
 //				requestChartLayout();
 
 				double scaleFactor = (event.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
-				xAxis.autoRangingProperty().set(false);
-				// xAxis.setTickUnit(1);
 
 				if (event.getDeltaY() > 0) {
-					double newL = xAxis.getLowerBound() + xAxis.getTickUnit();
-					double newU = xAxis.getUpperBound() - xAxis.getTickUnit();
-					if (newL < newU) {
+					if(event.isShiftDown()) {
+						double newL = xAxis.getLowerBound() + xAxis.getTickUnit()*0.01;
+						double newU = xAxis.getUpperBound() - xAxis.getTickUnit()*0.01;
+						if (newL < newU) {
+							xAxis.setLowerBound(newL);
+							xAxis.setUpperBound(newU);
+						}
+					} else {
+						double newL = xAxis.getLowerBound() + xAxis.getTickUnit();
+						double newU = xAxis.getUpperBound() - xAxis.getTickUnit();
+						if (newL < newU) {
+							xAxis.setLowerBound(newL);
+							xAxis.setUpperBound(newU);
+						}
+					}
+				} else {
+					if(event.isShiftDown()) {
+						double newL = xAxis.getLowerBound() - xAxis.getTickUnit()*0.01;
+						double newU = xAxis.getUpperBound() + xAxis.getTickUnit()*0.01;
+						xAxis.setLowerBound(newL);
+						xAxis.setUpperBound(newU);
+					} else {
+						double newL = xAxis.getLowerBound() - xAxis.getTickUnit();
+						double newU = xAxis.getUpperBound() + xAxis.getTickUnit();
 						xAxis.setLowerBound(newL);
 						xAxis.setUpperBound(newU);
 					}
-				} else {
-					double newL = xAxis.getLowerBound() - xAxis.getTickUnit();
-					double newU = xAxis.getUpperBound() + xAxis.getTickUnit();
-					xAxis.setLowerBound(newL);
-					xAxis.setUpperBound(newU);
 				}
 			}
 		});

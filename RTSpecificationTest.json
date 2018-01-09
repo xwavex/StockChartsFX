@@ -1,0 +1,50 @@
+{
+	"rtspecs": {
+		"components": [
+			{
+				"name": "fkin",
+				"class": "RTT::TestIntrospection",
+				"activity": {"period": 0.01, "priority": 10, "core": 0, "scheduler": "ORO_SHED_RT"},
+				"ports": [
+					{"name": "in_A_1", "type": "input", "data": "rstrt.kinematics.JointAngles"},
+					{"name": "out_A_1", "type": "output", "data": "rstrt.kinematics.JointAngles"}
+				],
+				"calls": [
+					{"name": "startHook()", "wcet": 100000},
+					{"name": "updateHook()", "wcet": 100000}
+				]
+			},
+			{
+				"name": "caux",
+				"class": "RTT::TestIntrospection",
+				"activity": {"period": 0.1, "priority": 11, "core": 1, "scheduler": "ORO_SHED_RT"},
+				"ports": [
+					{"name": "in_A_1", "type": "input", "data": "rstrt.kinematics.JointAngles"},
+					{"name": "out_A_1", "type": "output", "data": "rstrt.kinematics.JointAngles"}
+				],
+				"calls": [
+					{"name": "startHook()", "wcet": 100000},
+					{"name": "updateHook()", "wcet": 100000}
+				]
+			}
+		],
+		"controlpaths": [
+			{
+				"nodes": [
+					{"component": "ib", "port": "out_A_1"},
+					{"component": "ib2", "port": "out_A_1"},
+					{"component": "ib"}
+				],
+				"wcft": 100000
+			},
+			{
+				"nodes": [
+					{"component": "ib2", "port": "out_A_1"},
+					{"component": "ib1", "port": "out_A_1"},
+					{"component": "ib2"}
+				],
+				"wcft": 100000
+			}
+		]
+	}
+}

@@ -23,7 +23,7 @@ public class PortAccessIndicator extends Group {
 
 	private double maxStrokeWidth = 5.0;
 	private double minStrokeWidth = 0.8;
-	private double maxResolution = 10.0; // ms
+	private double maxResolution = 1.0; // ms
 
 	private double currentblockheight = 0.0;
 

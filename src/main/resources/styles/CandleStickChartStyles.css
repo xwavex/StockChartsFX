@@ -77,17 +77,10 @@ limitations under the License.
 	-fx-background-color: rgb(20,160,200,1.00);
 }
 
-.candlestick-bar.close-above-open {
-    -fx-background-color: rgb(200,200,200,1.00);
-    -fx-border-width: 1.5,1.5,1.5,1.5;
-    -fx-border-color: #000000;
-}
-
-.candlestick-bar.open-above-close {
+.candlestick-bar {
     -fx-background-color: rgb(200,200,200,1.00);
     -fx-border-width: 1.5,1.5,1.5,1.5;
     -fx-font-weight: bold;
-    -fx-border-color: #000000;
 }
 
 

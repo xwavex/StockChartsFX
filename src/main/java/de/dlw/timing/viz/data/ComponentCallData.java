@@ -22,23 +22,7 @@ public class ComponentCallData extends TimingData {
 	private double varDuration = 0.0;
 	private double stdDuration = 0.0;
 
-	/**
-	 * SPECIFICATIONS TODO
-	 */
-	public long wcet = 0L;
-
-
-	public long getWcet() {
-		return wcet;
-	}
-
-	public double getWcet2msec() {
-		return wcet * 1e-6;
-	}
-
-	public void setWcet(long wcet) {
-		this.wcet = wcet;
-	}
+	public ComponentData parentComponent = null;
 
 	private long worstMeasuredExecutionDuration = 0L;
 
@@ -70,7 +54,6 @@ public class ComponentCallData extends TimingData {
 	public ArrayList<CallEventData> getCallEventsInRange_NSec(long min, long max) {
 		return getCallEventsInRange_MSec(min * 1e-6, max * 1e-6);
 	}
-
 
 	public double getTimestamp2msecs(boolean average) {
 		return callEvents.get(0).getTimestamp2msecs();
@@ -114,15 +97,16 @@ public class ComponentCallData extends TimingData {
 		this.stdDuration = stdDuration;
 	}
 
-	public ComponentCallData() {
+	public ComponentCallData(ComponentData parentComponent) {
 		activeChartData = new ArrayList<XYChart.Data<Number, String>>();
 		callEvents = new ArrayList<CallEventData>();
 		meanDuration = 0.0;
 		varDuration = 0.0;
 		stdDuration = 0.0;
+		this.parentComponent = parentComponent;
 	}
 
-	public ComponentCallData(String name, String containerName) {
+	public ComponentCallData(String name, String containerName, ComponentData parentComponent) {
 		this.name = name;
 		this.containerName = containerName;
 		activeChartData = new ArrayList<XYChart.Data<Number, String>>();
@@ -130,6 +114,7 @@ public class ComponentCallData extends TimingData {
 		meanDuration = 0.0;
 		varDuration = 0.0;
 		stdDuration = 0.0;
+		this.parentComponent = parentComponent;
 	}
 
 	public String getName() {
@@ -138,6 +123,10 @@ public class ComponentCallData extends TimingData {
 
 	public long getWorstMeasuredExecutionDuration() {
 		return worstMeasuredExecutionDuration;
+	}
+
+	public void setWorstMeasuredExecutionDuration(long dur) {
+		worstMeasuredExecutionDuration = dur;
 	}
 
 	public double getWorstMeasuredExecutionDuration2msecs() {
@@ -160,9 +149,19 @@ public class ComponentCallData extends TimingData {
 		}
 	}
 
-//	public void addCallEvents(Collection<CallEventData> ceds) {
-//		callEvents.addAll(ceds);
-//	}
+	public void updateStatisticsFull() {
+		worstMeasuredExecutionDuration = 0L;
+		for (CallEventData ced : callEvents) {
+			long duration = ced.getEndTimestamp() - ced.getTimestamp();
+			if (duration > worstMeasuredExecutionDuration) {
+				worstMeasuredExecutionDuration = duration;
+			}
+		}
+	}
+
+	// public void addCallEvents(Collection<CallEventData> ceds) {
+	// callEvents.addAll(ceds);
+	// }
 
 	// @Override
 	// public String toString() {

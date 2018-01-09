@@ -8,6 +8,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultWeightedEdge;
+
+import de.dlw.timing.viz.data.ActivitySpecification;
 import de.dlw.timing.viz.data.CallEventData;
 import de.dlw.timing.viz.data.ComponentCallData;
 import de.dlw.timing.viz.data.ComponentData;
@@ -21,7 +26,11 @@ public class DataProcessor {
 	/**
 	 * SPECIFICATION TODO
 	 */
-	private long wcetDummy = 1000000L;
+	private long wcetDummy = 100000L;
+
+	public Graph<String, DefaultWeightedEdge> graph = null;
+
+	public ArrayList<ActivitySpecification> activities;
 
 	protected Point2D.Double currentBounds;
 	/**
@@ -38,6 +47,7 @@ public class DataProcessor {
 	public DataProcessor() {
 		components = new HashMap<String, ComponentData>();
 		currentBounds = new Point2D.Double(0, 0);
+		activities = new ArrayList<ActivitySpecification>();
 	}
 
 	public HashMap<String, ComponentData> getComponents() {
@@ -137,16 +147,12 @@ public class DataProcessor {
 
 		ComponentCallData ccd = null;
 		if (!componentData.callData.containsKey(functionName)) {
-			ccd = new ComponentCallData(functionName, componentName);
+			ccd = new ComponentCallData(functionName, componentName, componentData);
 		} else {
 			ccd = componentData.callData.get(functionName);
 		}
 
 		ccd.addCallEvent(sample);
-
-
-		// 2B. SPECIFICATIONS TODO
-		ccd.wcet = wcetDummy;
 
 		componentData.callData.put(functionName, ccd);
 		components.put(componentName, componentData);
@@ -302,6 +308,9 @@ public class DataProcessor {
 
 				calculateBasicStatistics(tmp);
 
+				System.out.println("WMET in nsec: " + tmp.getWorstMeasuredExecutionDuration());
+				System.out.println("WMET in msec: " + tmp.getWorstMeasuredExecutionDuration2msecs());
+
 				tmp.getActiveChartData().clear();
 
 				ArrayList<CallEventData> aaa = tmp.getCallEventsInRange_MSec(currentBounds.x, currentBounds.y);
@@ -381,13 +390,6 @@ public class DataProcessor {
 				timingData.setTimestamp(timingData.getTimestamp() - minimalTimestamp);
 			}
 		}
-	}
-
-	public void dummyTestAddData() {
-		ComponentCallData c = new ComponentCallData("nnn", "dlw");
-		CallEventData ccc = new CallEventData("nnn", "dlw", 0L, 4000000L);
-		c.addCallEvent(ccc);
-		dataSeriesReference.get(0).getData().add(new XYChart.Data<>(0L, "dlw", c));
 	}
 
 	// /**
@@ -586,8 +588,11 @@ public class DataProcessor {
 		for (ComponentData cd : this.components.values()) {
 			// loop over all functions (e.g., updateHook(), etc.).
 			for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
+				if (entry_s_ccd.getKey().equals("stopHook()")) {
+					continue;
+				}
 				ComponentCallData tmp = entry_s_ccd.getValue();
-				System.out.println("For " + cd.getName() + " check hook " + tmp.getName());
+//				System.out.println("For " + cd.getName() + " check hook " + tmp.getName());
 				// use the first sample to determine the bounds.
 				double start = tmp.getCallEvents().get(0).getTimestamp2msecs();
 				if (start < minTimestamp) {
@@ -597,7 +602,7 @@ public class DataProcessor {
 				if (end > maxTimestamp) {
 					maxTimestamp = end;
 				}
-				System.out.println("Consider " + tmp.getCallEvents().get(0).getTimestamp() + " && " + tmp.getCallEvents().get(0).getEndTimestamp());
+//				System.out.println("Consider " + tmp.getCallEvents().get(0).getTimestamp() + " && " + tmp.getCallEvents().get(0).getEndTimestamp());
 			}
 		}
 		return new Point2D.Double(minTimestamp, maxTimestamp);
@@ -605,9 +610,15 @@ public class DataProcessor {
 
 	private void calculateBasicStatistics(ComponentCallData ccd) {
 		ArrayList<Long> duration = new ArrayList<Long>();
+		long wmect = 0L;
+
+		long debug_start = 0L;
+
 		for (CallEventData ced : ccd.getCallEvents()) {
-			duration.add(ced.getEndTimestamp() - ced.getTimestamp());
+			long dur = ced.getEndTimestamp() - ced.getTimestamp();
+			duration.add(dur);
 		}
+
 		// TODO do this differently and save the duration array and the old size
 		// inside ccd.
 
@@ -619,9 +630,49 @@ public class DataProcessor {
 		ccd.setVarDuration(var_duration);
 		ccd.setStdDuration(std_duration);
 
+		for (CallEventData ced : ccd.getCallEvents()) {
+			long dur = ced.getEndTimestamp() - ced.getTimestamp();
+			if (dur > wmect && dur <= (mean_duration*2)) { // TODO HACK!
+				wmect = dur;
+				debug_start = ced.getTimestamp();
+			}
+		}
+
+		ccd.setWorstMeasuredExecutionDuration(wmect);
+
+
+		System.out.println("wmect         = " + wmect);
+		System.out.println("debug_start n = " + debug_start);
+		System.out.println("debug_start m = " + debug_start * 1e-6);
 		System.out.println("mean_duration = " + mean_duration);
-		System.out.println("var_duration = " + var_duration);
-		System.out.println("std_duration = " + std_duration);
+		System.out.println("var_duration  = " + var_duration);
+		System.out.println("std_duration  = " + std_duration);
+	}
+
+	public static String hsvToRgb(float hue, float saturation, float value) {
+
+	    int h = (int)(hue * 6);
+	    float f = hue * 6 - h;
+	    float p = value * (1 - saturation);
+	    float q = value * (1 - f * saturation);
+	    float t = value * (1 - (1 - f) * saturation);
+
+	    switch (h) {
+	      case 0: return rgbToString(value, t, p);
+	      case 1: return rgbToString(q, value, p);
+	      case 2: return rgbToString(p, value, t);
+	      case 3: return rgbToString(p, q, value);
+	      case 4: return rgbToString(t, p, value);
+	      case 5: return rgbToString(value, p, q);
+	      default: throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + hue + ", " + saturation + ", " + value);
+	    }
+	}
+
+	public static String rgbToString(float r, float g, float b) {
+	    String rs = Integer.toHexString((int)(r * 256));
+	    String gs = Integer.toHexString((int)(g * 256));
+	    String bs = Integer.toHexString((int)(b * 256));
+	    return rs + gs + bs;
 	}
 
 }

@@ -17,9 +17,19 @@ public class ComponentData implements Serializable {
 
 	public HashMap<String, ComponentPortData> portData;
 
+	public ComponentSpecification componentSpecs = null;
+
 	public ComponentData() {
 		this.callData = new HashMap<String, ComponentCallData>();
 		this.portData = new HashMap<String, ComponentPortData>();
+	}
+
+	public void setComponentSpecs(ComponentSpecification componentSpecs) {
+		this.componentSpecs = componentSpecs;
+	}
+
+	public ComponentSpecification getComponentSpecs() {
+		return this.componentSpecs;
 	}
 
 	public ComponentData(String name) {

@@ -30,21 +30,27 @@ public class MainApp extends Application {
 	public void start(Stage stage) throws Exception {
 		// read JSON data
 		JSONDataParser jdp = new JSONDataParser();
-//		List<TimingData> data = jdp.parse("/home/dwigand/code/cogimon/CoSimA/framework-extensions/rtt-core-extensions/build/reports.dat");
-//		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reports.dat");
-		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsWOtimesync.dat");
+		// List<TimingData> data =
+		// jdp.parse("/home/dwigand/code/cogimon/CoSimA/framework-extensions/rtt-core-extensions/build/reports.dat");
+		// List<TimingData> data =
+		// jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reports.dat");
+		// List<TimingData> data =
+		// jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsWOtimesync.dat");
+		// List<TimingData> data =
+		// jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsCapacity40_2.dat");
+		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/rtReport2.dat");
+
 		// analyze data
 		DataProcessor dp = new DataProcessor();
+		dp.graph = jdp.parseDotGraph("/home/dwigand/code/misc/java/javafx/StockChartsFX/orograph_minimal.dot");
 
-
-//		DataProcessor.shiftTimestamps(jdp.minimalTimestamp, data);
-//		dp.setComponents(DataProcessor.calculateSetOfComponents(data));
-
+		// DataProcessor.shiftTimestamps(jdp.minimalTimestamp, data);
+		// dp.setComponents(DataProcessor.calculateSetOfComponents(data));
 
 		CandleStickChart candleStickChart = new CandleStickChart("Timing Chart DLW", dp);
 		// enable the data processor to work on the data series
 
-//		dp.dummyTestAddData();
+		// dp.dummyTestAddData();
 		System.out.println("READING finished = " + data.size());
 		int i = 0;
 		for (TimingData timingData : data) {
@@ -55,9 +61,10 @@ public class MainApp extends Application {
 			}
 		}
 		System.out.println("PROCESSING finished");
-//		dp.printReport();
+		// dp.printReport();
 		dp.triggerRecalculation();
-
+		jdp.parseAndAddRTSpecification("/home/dwigand/code/misc/java/javafx/StockChartsFX/RTSpecificationTest.json", dp);
+		System.out.println("PROCESSING parseAndAddRTSpecification() finished");
 
 		Scene scene = new Scene(candleStickChart);
 		scene.getStylesheets().add("/styles/CandleStickChartStyles.css");
@@ -80,16 +87,17 @@ public class MainApp extends Application {
 	 *            the command line arguments
 	 */
 	public static void main(String[] args) {
-//		HashMap<String, ComponentCallData> h = new HashMap<String, ComponentCallData>();
-//		h.put("a", new ComponentCallData("myname", "containername"));
-//
-//		System.out.println(h.get("a").getContainerName());
-//
-//		ComponentCallData c = h.get("a");
-//
-//		c.setContainerName("blaaa");
-//
-//		System.out.println(h.get("a").getContainerName());
+		// HashMap<String, ComponentCallData> h = new HashMap<String,
+		// ComponentCallData>();
+		// h.put("a", new ComponentCallData("myname", "containername"));
+		//
+		// System.out.println(h.get("a").getContainerName());
+		//
+		// ComponentCallData c = h.get("a");
+		//
+		// c.setContainerName("blaaa");
+		//
+		// System.out.println(h.get("a").getContainerName());
 
 		launch(args);
 	}
