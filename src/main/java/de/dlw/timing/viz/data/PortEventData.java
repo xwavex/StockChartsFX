@@ -1,11 +1,15 @@
 package de.dlw.timing.viz.data;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author Dennis Leroy Wigand
  */
 public class PortEventData extends TimingData {
 	public ComponentPortData parentReference = null;
+
+	public ArrayList<PortConnectionData> portConnectionDataRefs;
 
 	public enum CallPortType {
 		CALL_UNIVERSAL, CALL_START, CALL_END, CALL_INSTANTANEOUS, CALL_PORT_WRITE, CALL_PORT_READ_NODATA, CALL_PORT_READ_NEWDATA, CALL_PORT_READ_OLDDATA, CALL_START_WITH_DURATION
@@ -24,7 +28,7 @@ public class PortEventData extends TimingData {
 	}
 
 	public PortEventData() {
-
+		portConnectionDataRefs = new ArrayList<PortConnectionData>();
 	}
 
 	public PortEventData(String name, String containerName, long timestamp, CallPortType callType) {
@@ -32,26 +36,8 @@ public class PortEventData extends TimingData {
 		this.timestamp = timestamp;
 		this.containerName = containerName;
 		this.callType = callType;
+		this.portConnectionDataRefs = new ArrayList<PortConnectionData>();
 	}
-
-	// /**
-	// * Updates the last price, adjusting the high and low
-	// * @param close The last price
-	// */
-	// public void update( double close ) {
-	// if( close > high ) {
-	// high = close;
-	// }
-	//
-	// if( close < low ) {
-	// low = close;
-	// }
-	// this.close = close;
-	// }
-
-	// protected BigDecimal format( double price ) {
-	// return BigDecimal.ZERO;
-	// }
 
 	public String getName() {
 		return name;

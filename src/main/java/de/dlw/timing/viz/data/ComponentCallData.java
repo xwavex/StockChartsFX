@@ -15,7 +15,7 @@ public class ComponentCallData extends TimingData {
 	private static final long serialVersionUID = -2577594626668914851L;
 	protected String containerName;
 
-	protected ArrayList<CallEventData> callEvents;
+	public ArrayList<CallEventData> callEvents;
 	protected ArrayList<XYChart.Data<Number, String>> activeChartData;
 
 	private double meanDuration = 0.0;

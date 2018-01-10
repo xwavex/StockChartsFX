@@ -118,10 +118,10 @@ public class JSONDataParser {
 		return data;
 	}
 
-	public Graph<String, DefaultWeightedEdge> parseDotGraph(String dotFile)
+	public Graph<String, TimingGraphEdge> parseDotGraph(String dotFile)
 			throws FileNotFoundException, IOException, ParseException, ImportException {
-		Graph<String, DefaultWeightedEdge> graph = new DirectedPseudograph<>(DefaultWeightedEdge.class);
-		GraphImporter<String, DefaultWeightedEdge> importer = createImporter();
+		Graph<String, TimingGraphEdge> graph = new DirectedPseudograph<>(TimingGraphEdge.class);
+		GraphImporter<String, TimingGraphEdge> importer = createImporter();
 
 		importer.importGraph(graph, new BufferedReader(new FileReader(dotFile)));
 		return graph;
@@ -206,9 +206,9 @@ public class JSONDataParser {
 
 		dp.activities = global_activities;
 
-//		Color[] colors = generateRandomColorHSV(global_activities.size());
+		// Color[] colors = generateRandomColorHSV(global_activities.size());
 		for (int i = 0; i < global_activities.size(); i++) {
-//			Color c = colors[i];
+			// Color c = colors[i];
 			global_activities.get(i).color = KELLY_COLORS[i];
 		}
 
@@ -242,7 +242,7 @@ public class JSONDataParser {
 	/**
 	 * Create the importer
 	 */
-	public static GraphImporter<String, DefaultWeightedEdge> createImporter() {
+	public static GraphImporter<String, TimingGraphEdge> createImporter() {
 		/*
 		 * Create vertex provider.
 		 *
@@ -279,122 +279,121 @@ public class JSONDataParser {
 		 * and target vertex of the edge, an edge label (which can be null) and
 		 * a set of edge attributes all read from the input stream.
 		 */
-		EdgeProvider<String, DefaultWeightedEdge> edgeProvider = (from, to, label,
-				attributes) -> new DefaultWeightedEdge();
+		EdgeProvider<String, TimingGraphEdge> edgeProvider = (from, to, label, attributes) -> new TimingGraphEdge(
+				attributes.get("source").getValue(), attributes.get("target").getValue());
 
 		/*
 		 * Create the graph importer with a vertex and an edge provider.
 		 */
-		DOTImporter<String, DefaultWeightedEdge> importer = new DOTImporter<>(vertexProvider, edgeProvider);
+		DOTImporter<String, TimingGraphEdge> importer = new DOTImporter<>(vertexProvider, edgeProvider);
 
 		return importer;
 	}
 
-//	public static Color[] generateRandomColorHSV(int colorsNumber) {
-//		Color[] colors = new Color[colorsNumber];
-//		for (int i = 0, j = 0; i < 360; i += 360 / colorsNumber, j++) {
-//			// hsv[0] is Hue [0 .. 360) hsv[1] is Saturation [0...1] hsv[2] is
-//			// Value [0...1]
-//			float[] hsv = new float[3];
-//			hsv[0] = i;
-//			hsv[1] = (float) Math.random(); // Some restrictions here?
-//			hsv[2] = (float) Math.random();
-//
-//			colors[j] = generateRandomColor(hsvToRgb(hsv[0], hsv[1], hsv[2]));
-//		}
-//		return colors;
-//	}
-//
-//	public static Color hsvToRgb(float h, float s, float v) {
-//		float r = 0f;
-//		float g = 0f;
-//		float b = 0f;
-//
-//		float i = (float) Math.floor(h * 6);
-//		float f = h * 6 - i;
-//		float p = v * (1 - s);
-//		float q = v * (1 - f * s);
-//		float t = v * (1 - (1 - f) * s);
-//
-//		switch ((int) (i % 6)) {
-//		case 0:
-//			r = v;
-//			g = t;
-//			b = p;
-//			break;
-//		case 1:
-//			r = q;
-//			g = v;
-//			b = p;
-//			break;
-//		case 2:
-//			r = p;
-//			g = v;
-//			b = t;
-//			break;
-//		case 3:
-//			r = p;
-//			g = q;
-//			b = v;
-//			break;
-//		case 4:
-//			r = t;
-//			g = p;
-//			b = v;
-//			break;
-//		case 5:
-//			r = v;
-//			g = p;
-//			b = q;
-//			break;
-//		}
-//		return new Color((int)(r * 255), (int)(g * 255), (int)(b * 255));
-//	}
-//
-//	final static Random mRandom = new Random(System.currentTimeMillis());
-//
-//	public static Color generateRandomColor(Color mix) {
-//		Random random = new Random();
-//		int red = random.nextInt(256);
-//		int green = random.nextInt(256);
-//		int blue = random.nextInt(256);
-//
-//		// mix the color
-//		if (mix != null) {
-//			red = (red + mix.getRed()) / 2;
-//			green = (green + mix.getGreen()) / 2;
-//			blue = (blue + mix.getBlue()) / 2;
-//		}
-//
-//		Color color = new Color(red, green, blue);
-//		return color;
-//	}
+	// public static Color[] generateRandomColorHSV(int colorsNumber) {
+	// Color[] colors = new Color[colorsNumber];
+	// for (int i = 0, j = 0; i < 360; i += 360 / colorsNumber, j++) {
+	// // hsv[0] is Hue [0 .. 360) hsv[1] is Saturation [0...1] hsv[2] is
+	// // Value [0...1]
+	// float[] hsv = new float[3];
+	// hsv[0] = i;
+	// hsv[1] = (float) Math.random(); // Some restrictions here?
+	// hsv[2] = (float) Math.random();
+	//
+	// colors[j] = generateRandomColor(hsvToRgb(hsv[0], hsv[1], hsv[2]));
+	// }
+	// return colors;
+	// }
+	//
+	// public static Color hsvToRgb(float h, float s, float v) {
+	// float r = 0f;
+	// float g = 0f;
+	// float b = 0f;
+	//
+	// float i = (float) Math.floor(h * 6);
+	// float f = h * 6 - i;
+	// float p = v * (1 - s);
+	// float q = v * (1 - f * s);
+	// float t = v * (1 - (1 - f) * s);
+	//
+	// switch ((int) (i % 6)) {
+	// case 0:
+	// r = v;
+	// g = t;
+	// b = p;
+	// break;
+	// case 1:
+	// r = q;
+	// g = v;
+	// b = p;
+	// break;
+	// case 2:
+	// r = p;
+	// g = v;
+	// b = t;
+	// break;
+	// case 3:
+	// r = p;
+	// g = q;
+	// b = v;
+	// break;
+	// case 4:
+	// r = t;
+	// g = p;
+	// b = v;
+	// break;
+	// case 5:
+	// r = v;
+	// g = p;
+	// b = q;
+	// break;
+	// }
+	// return new Color((int)(r * 255), (int)(g * 255), (int)(b * 255));
+	// }
+	//
+	// final static Random mRandom = new Random(System.currentTimeMillis());
+	//
+	// public static Color generateRandomColor(Color mix) {
+	// Random random = new Random();
+	// int red = random.nextInt(256);
+	// int green = random.nextInt(256);
+	// int blue = random.nextInt(256);
+	//
+	// // mix the color
+	// if (mix != null) {
+	// red = (red + mix.getRed()) / 2;
+	// green = (green + mix.getGreen()) / 2;
+	// blue = (blue + mix.getBlue()) / 2;
+	// }
+	//
+	// Color color = new Color(red, green, blue);
+	// return color;
+	// }
 
 	// Don't forget to import javafx.scene.paint.Color;
 
-	private static final Color[] KELLY_COLORS = {
-	    Color.web("0xFFB300"),    // Vivid Yellow
-	    Color.web("0x803E75"),    // Strong Purple
-	    Color.web("0xFF6800"),    // Vivid Orange
-	    Color.web("0xA6BDD7"),    // Very Light Blue
-	    Color.web("0xC10020"),    // Vivid Red
-	    Color.web("0xCEA262"),    // Grayish Yellow
-	    Color.web("0x817066"),    // Medium Gray
+	private static final Color[] KELLY_COLORS = { Color.web("0xFFB300"), // Vivid
+																			// Yellow
+			Color.web("0x803E75"), // Strong Purple
+			Color.web("0xFF6800"), // Vivid Orange
+			Color.web("0xA6BDD7"), // Very Light Blue
+			Color.web("0xC10020"), // Vivid Red
+			Color.web("0xCEA262"), // Grayish Yellow
+			Color.web("0x817066"), // Medium Gray
 
-	    Color.web("0x007D34"),    // Vivid Green
-	    Color.web("0xF6768E"),    // Strong Purplish Pink
-	    Color.web("0x00538A"),    // Strong Blue
-	    Color.web("0xFF7A5C"),    // Strong Yellowish Pink
-	    Color.web("0x53377A"),    // Strong Violet
-	    Color.web("0xFF8E00"),    // Vivid Orange Yellow
-	    Color.web("0xB32851"),    // Strong Purplish Red
-	    Color.web("0xF4C800"),    // Vivid Greenish Yellow
-	    Color.web("0x7F180D"),    // Strong Reddish Brown
-	    Color.web("0x93AA00"),    // Vivid Yellowish Green
-	    Color.web("0x593315"),    // Deep Yellowish Brown
-	    Color.web("0xF13A13"),    // Vivid Reddish Orange
-	    Color.web("0x232C16"),    // Dark Olive Green
+			Color.web("0x007D34"), // Vivid Green
+			Color.web("0xF6768E"), // Strong Purplish Pink
+			Color.web("0x00538A"), // Strong Blue
+			Color.web("0xFF7A5C"), // Strong Yellowish Pink
+			Color.web("0x53377A"), // Strong Violet
+			Color.web("0xFF8E00"), // Vivid Orange Yellow
+			Color.web("0xB32851"), // Strong Purplish Red
+			Color.web("0xF4C800"), // Vivid Greenish Yellow
+			Color.web("0x7F180D"), // Strong Reddish Brown
+			Color.web("0x93AA00"), // Vivid Yellowish Green
+			Color.web("0x593315"), // Deep Yellowish Brown
+			Color.web("0xF13A13"), // Vivid Reddish Orange
+			Color.web("0x232C16"), // Dark Olive Green
 	};
-
 
 }

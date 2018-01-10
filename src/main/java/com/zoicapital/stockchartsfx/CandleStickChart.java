@@ -17,6 +17,9 @@ package com.zoicapital.stockchartsfx;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -28,10 +31,12 @@ import de.dlw.timing.viz.data.CallEventData;
 import de.dlw.timing.viz.data.ComponentCallData;
 import de.dlw.timing.viz.data.ComponentData;
 import de.dlw.timing.viz.data.ComponentPortData;
+import de.dlw.timing.viz.data.PortConnectionData;
 import de.dlw.timing.viz.data.PortEventData;
 import de.dlw.timing.viz.data.TimingData;
 import de.dlw.timing.viz.data.parser.DataProcessor;
 import de.dlw.timing.viz.viewmodel.PortAccessIndicator;
+import de.dlw.timing.viz.viewmodel.PortConnection;
 import de.dlw.timing.viz.viewmodel.TimingBlock;
 import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
@@ -73,17 +78,17 @@ public class CandleStickChart extends XYChart<Number, String> {
 	protected static final Logger logger = Logger.getLogger(CandleStickChart.class.getName());
 	protected int maxBarsToDisplay;
 	protected ObservableList<XYChart.Series<Number, String>> dataSeries;
-//	protected TimingData lastBar;
+	// protected TimingData lastBar;
 	protected CategoryAxis yAxis;
 	protected NumberAxis xAxis;
 	private double oldMouseX;
 	protected DataProcessor dataProcessor;
 	private double currentTickUnit = -1;
 
-//	ComponentCallData c; // TODO test
-//	CallEventData ccc; // TODO test
+	// ComponentCallData c; // TODO test
+	// CallEventData ccc; // TODO test
 
-//	protected HashMap<String, ComponentData> componentData;
+	// protected HashMap<String, ComponentData> componentData;
 
 	public CandleStickChart(String title, DataProcessor dataProcessor) {
 		this(title, Integer.MAX_VALUE, dataProcessor);
@@ -116,7 +121,8 @@ public class CandleStickChart extends XYChart<Number, String> {
 	 * @param maxBarsToDisplay
 	 *            The maximum number of bars to display on the chart.
 	 */
-	public CandleStickChart(String title, NumberAxis xAxis, CategoryAxis yAxis, int maxBarsToDisplay, DataProcessor dataProcessor) {
+	public CandleStickChart(String title, NumberAxis xAxis, CategoryAxis yAxis, int maxBarsToDisplay,
+			DataProcessor dataProcessor) {
 		super(xAxis, yAxis);
 		this.xAxis = xAxis;
 		this.yAxis = yAxis;
@@ -151,21 +157,23 @@ public class CandleStickChart extends XYChart<Number, String> {
 					xAxis.autoRangingProperty().set(false);
 				}
 
-//				// TODO test adding new one
-//				ComponentCallData c = new ComponentCallData("nnn", "dlw");
-//				c.addCallEvent(new CallEventData("nnn", "dlw", 0L, 4000000000L));
-//				series.getData().add(new XYChart.Data<>(0L, "dlw", c));
-//				// check if CCD exists otherwise create and do the same for component data!
-//				ccc.setTimestamp(ccc.getTimestamp() + 30000000);
-//				ccc.setEndTimestamp(ccc.getEndTimestamp() + 30000000);
-//				requestChartLayout();
+				// // TODO test adding new one
+				// ComponentCallData c = new ComponentCallData("nnn", "dlw");
+				// c.addCallEvent(new CallEventData("nnn", "dlw", 0L,
+				// 4000000000L));
+				// series.getData().add(new XYChart.Data<>(0L, "dlw", c));
+				// // check if CCD exists otherwise create and do the same for
+				// component data!
+				// ccc.setTimestamp(ccc.getTimestamp() + 30000000);
+				// ccc.setEndTimestamp(ccc.getEndTimestamp() + 30000000);
+				// requestChartLayout();
 
 				double scaleFactor = (event.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
 
 				if (event.getDeltaY() > 0) {
-					if(event.isShiftDown()) {
-						double newL = xAxis.getLowerBound() + xAxis.getTickUnit()*0.01;
-						double newU = xAxis.getUpperBound() - xAxis.getTickUnit()*0.01;
+					if (event.isShiftDown()) {
+						double newL = xAxis.getLowerBound() + xAxis.getTickUnit() * 0.01;
+						double newU = xAxis.getUpperBound() - xAxis.getTickUnit() * 0.01;
 						if (newL < newU) {
 							xAxis.setLowerBound(newL);
 							xAxis.setUpperBound(newU);
@@ -179,9 +187,9 @@ public class CandleStickChart extends XYChart<Number, String> {
 						}
 					}
 				} else {
-					if(event.isShiftDown()) {
-						double newL = xAxis.getLowerBound() - xAxis.getTickUnit()*0.01;
-						double newU = xAxis.getUpperBound() + xAxis.getTickUnit()*0.01;
+					if (event.isShiftDown()) {
+						double newL = xAxis.getLowerBound() - xAxis.getTickUnit() * 0.01;
+						double newU = xAxis.getUpperBound() + xAxis.getTickUnit() * 0.01;
 						xAxis.setLowerBound(newL);
 						xAxis.setUpperBound(newU);
 					} else {
@@ -345,17 +353,19 @@ public class CandleStickChart extends XYChart<Number, String> {
 					// ((CallEventData)item.getExtraValue()).getEndTimestamp());
 					// System.out.println("sX = " + startX);
 
-//					System.out.println("start = " + ((ComponentCallData) item.getExtraValue()).getTimestamp2msecs(average));
-//					System.out.println("end   = " + ((ComponentCallData) item.getExtraValue()).getEndTimestamp2msecs(average));
-//					System.out.println("dur   = " + (((ComponentCallData) item.getExtraValue()).getEndTimestamp2msecs(average)
-//							- ((ComponentCallData) item.getExtraValue()).getTimestamp2msecs(average)));
-
-
+					// System.out.println("start = " + ((ComponentCallData)
+					// item.getExtraValue()).getTimestamp2msecs(average));
+					// System.out.println("end = " + ((ComponentCallData)
+					// item.getExtraValue()).getEndTimestamp2msecs(average));
+					// System.out.println("dur = " + (((ComponentCallData)
+					// item.getExtraValue()).getEndTimestamp2msecs(average)
+					// - ((ComponentCallData)
+					// item.getExtraValue()).getTimestamp2msecs(average)));
 
 					double dX = endX - x;
-//					System.out.println("X = " + x);
-//					System.out.println("endX = " + endX);
-//					System.out.println("dX = " + dX);
+					// System.out.println("X = " + x);
+					// System.out.println("endX = " + endX);
+					// System.out.println("dX = " + dX);
 					if (dX < 1) {
 						tBlock.update(0, -blockHeight, 1, blockHeight, xAxis, true);
 					} else {
@@ -365,8 +375,6 @@ public class CandleStickChart extends XYChart<Number, String> {
 					// tBlock.updateTooltip(bar.getOpen(), bar.getClose(),
 					// bar.getHigh(), bar.getLow());
 
-
-
 					// position the candle
 					tBlock.setLayoutX(x);
 					tBlock.setLayoutY(y);
@@ -375,6 +383,13 @@ public class CandleStickChart extends XYChart<Number, String> {
 				} else if (itemNode instanceof PortAccessIndicator && item.getYValue() != null) {
 					PortAccessIndicator pAI = (PortAccessIndicator) itemNode;
 					pAI.update(blockHeight, xAxis);
+					pAI.toFront();
+					pAI.setLayoutX(x);
+					pAI.setLayoutY(y);
+
+				} else if (itemNode instanceof PortConnection && item.getYValue() != null) {
+					PortConnection pAI = (PortConnection) itemNode;
+					pAI.update(blockHeight, xAxis, yAxis);
 					pAI.toFront();
 					pAI.setLayoutX(x);
 					pAI.setLayoutY(y);
@@ -493,6 +508,22 @@ public class CandleStickChart extends XYChart<Number, String> {
 			PortEventData tmp = (PortEventData) item.getExtraValue();
 			node = new PortAccessIndicator(tmp);
 			item.setNode(node);
+		} else if (item.getExtraValue() instanceof PortConnectionData) {
+			PortConnectionData tmp = (PortConnectionData) item.getExtraValue();
+			// add me as reference.
+			if (tmp.target != null && tmp.target.portConnectionDataRefs != null
+					&& !tmp.target.portConnectionDataRefs.contains(tmp)) {
+				tmp.target.portConnectionDataRefs.add(tmp);
+				// sort list
+				Collections.sort(tmp.target.portConnectionDataRefs, new Comparator<PortConnectionData>() {
+					@Override
+					public int compare(PortConnectionData o1, PortConnectionData o2) {
+						return Long.compare(o1.getTimestamp(), o2.getTimestamp());
+					}
+				});
+			}
+			node = new PortConnection(tmp);
+			item.setNode(node);
 		}
 		return node;
 	}
@@ -549,7 +580,7 @@ public class CandleStickChart extends XYChart<Number, String> {
 		}
 	}
 
-//	private String dataStyleClass;
+	// private String dataStyleClass;
 
 	protected static CandleStickChart chart;
 

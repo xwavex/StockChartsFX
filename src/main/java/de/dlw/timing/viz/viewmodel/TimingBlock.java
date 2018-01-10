@@ -41,7 +41,7 @@ public class TimingBlock extends Group {
 
 		lblDuration = new Label("" + df.format((this.cedReference.getEndTimestamp2msecs()-this.cedReference.getTimestamp2msecs())) + " ms");
 		lblDuration.setAlignment(Pos.TOP_CENTER);
-		getChildren().addAll(bar, lblName, wmeDuration, specificationWCET, lblDuration, stdRegion, meanDurationLine);
+		getChildren().addAll(wmeDuration, specificationWCET, bar, lblDuration, stdRegion, meanDurationLine, lblName);
 		this.seriesStyleClass = seriesStyleClass;
 		this.dataStyleClass = dataStyleClass;
 		updateStyleClasses();
@@ -186,6 +186,15 @@ public class TimingBlock extends Group {
 //		} else if (getChildren().contains(stdRegion)) {
 //			getChildren().remove(stdRegion);
 //		}
+
+
+//			specificationWCET
+//			meanDurationLine
+//			wmeDuration
+//			stdRegion
+//			bar
+//			lblName
+//			lblDuration
 	}
 
 	public void updateTooltip(String name, String container, double startTimeMS, double endTimeMS) {

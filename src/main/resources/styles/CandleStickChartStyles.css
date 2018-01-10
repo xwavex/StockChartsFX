@@ -73,6 +73,18 @@ limitations under the License.
     -fx-stroke: #000000;
 }
 
+.port-connection {
+
+}
+
+.port-connection.normal {
+	-fx-stroke: rgb(200,200,200,0.1);
+}
+
+.port-connection.last {
+	-fx-stroke: rgb(255,255,255,0.8);
+}
+
 .stdregion-bar {
 	-fx-background-color: rgb(20,160,200,1.00);
 }

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import de.dlw.timing.viz.data.PortEventData.CallPortType;
 import javafx.scene.chart.XYChart;
 
 /**
@@ -15,9 +16,19 @@ public class ComponentPortData extends TimingData {
 	private static final long serialVersionUID = -3213534612701712913L;
 	protected String containerName;
 
-	protected ArrayList<PortEventData> portEvents;
+	public ArrayList<PortEventData> portEvents;
 
 	protected ArrayList<XYChart.Data<Number, String>> activeChartData;
+
+	private boolean inputType = true;
+
+	public boolean isInputType() {
+		return inputType;
+	}
+
+	public void setInputType(boolean inputType) {
+		this.inputType = inputType;
+	}
 
 	public ArrayList<XYChart.Data<Number, String>> getActiveChartData() {
 		return activeChartData;
@@ -39,11 +50,12 @@ public class ComponentPortData extends TimingData {
 		this.portEvents = new ArrayList<PortEventData>();
 	}
 
-	public ComponentPortData(String name, String containerName) {
+	public ComponentPortData(String name, String containerName, boolean inputType) {
 		this.name = name;
 		this.containerName = containerName;
 		this.activeChartData = new ArrayList<XYChart.Data<Number, String>>();
 		this.portEvents = new ArrayList<PortEventData>();
+		this.inputType = inputType;
 	}
 
 	public String getName() {
@@ -77,9 +89,9 @@ public class ComponentPortData extends TimingData {
 	}
 
 	public double getTimestamp2msecs(boolean average) {
-//		if (average) {
-//			return meanStartTime * 1e-6;
-		//} else
+		// if (average) {
+		// return meanStartTime * 1e-6;
+		// } else
 		if (!portEvents.isEmpty()) {
 			return portEvents.get(portEvents.size() - 1).getTimestamp2msecs();
 		}
@@ -87,9 +99,9 @@ public class ComponentPortData extends TimingData {
 	}
 
 	public long getTimestamp(boolean average) {
-//		if (average) {
-//			return (long) meanStartTime;
-		//} else
+		// if (average) {
+		// return (long) meanStartTime;
+		// } else
 		if (!portEvents.isEmpty()) {
 			return portEvents.get(portEvents.size() - 1).getTimestamp();
 		}
@@ -106,15 +118,48 @@ public class ComponentPortData extends TimingData {
 		return getTimestamp2msecs(false);
 	}
 
-	// @Override
-	// public String toString() {
-	// StringBuilder sb = new StringBuilder();
-	// sb.append("Container Name: ").append(containerName);
-	// sb.append(" Name: ").append(name);
-	// sb.append(" Timestamp: ").append(timestamp);
-	// sb.append(" End Timestamp: ").append(endTimestamp);
-	// return sb.toString();
-	// }
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Container Name: ").append(containerName);
+		sb.append(" Name: ").append(name);
+		sb.append(" Timestamp: ").append(timestamp);
+		sb.append(" Inputport?: ").append(inputType);
+		return sb.toString();
+	}
+
+	@Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        if (!(obj instanceof ComponentPortData)) {
+        	return false;
+        }
+
+        final ComponentPortData other = (ComponentPortData) obj;
+
+        if (timestamp != other.timestamp) {
+            return false;
+        }
+        if (!name.equals(other.name)) {
+            return false;
+        }
+        if (!containerName.equals(other.containerName)) {
+            return false;
+        }
+        if (inputType != other.inputType) {
+            return false;
+        }
+        return true;
+    }
 
 	public ArrayList<PortEventData> getPortEvents() {
 		return portEvents;
@@ -185,5 +230,39 @@ public class ComponentPortData extends TimingData {
 	// }
 	// return true;
 	// }
+
+	public static boolean testForInputPort(String call_type) {
+		switch (call_type) {
+		case "CALL_PORT_READ_NODATA":
+			return true;
+		case "CALL_PORT_READ_OLDDATA":
+			return true;
+		case "CALL_PORT_READ_NEWDATA":
+			return true;
+		case "CALL_PORT_WRITE":
+			return false;
+		default:
+			// should never happen!
+			return false;
+		}
+	}
+
+	@Override
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        long temp = timestamp;
+        result = PRIME * result + (int) (temp ^ (temp >>> 32));
+        for (int i = 0; i < name.length(); i++) {
+        	result = PRIME * result + (int) (name.charAt(i) ^ (name.charAt(i) >>> 32));
+        }
+        for (int i = 0; i < containerName.length(); i++) {
+        	result = PRIME * result + (int) (containerName.charAt(i) ^ (containerName.charAt(i) >>> 32));
+        }
+//        result = PRIME * result + activeChartData.hashCode();
+//        result = PRIME * result + portEvents.hashCode();
+        result = PRIME * result + Boolean.hashCode(inputType);
+        return result;
+    }
 
 }
