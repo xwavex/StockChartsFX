@@ -32,14 +32,15 @@ public class TimingBlock extends Group {
 
 	public CallEventData cedReference = null;
 
-
 	public TimingBlock(String seriesStyleClass, String dataStyleClass, CallEventData ced) {
 		setAutoSizeChildren(false);
 		this.cedReference = ced;
 		lblName = new Label(this.cedReference.getName());
 		lblName.setAlignment(Pos.CENTER);
 
-		lblDuration = new Label("" + df.format((this.cedReference.getEndTimestamp2msecs()-this.cedReference.getTimestamp2msecs())) + " ms");
+		lblDuration = new Label(
+				"" + df.format((this.cedReference.getEndTimestamp2msecs() - this.cedReference.getTimestamp2msecs()))
+						+ " ms");
 		lblDuration.setAlignment(Pos.TOP_CENTER);
 		getChildren().addAll(wmeDuration, specificationWCET, bar, lblDuration, stdRegion, meanDurationLine, lblName);
 		this.seriesStyleClass = seriesStyleClass;
@@ -81,7 +82,6 @@ public class TimingBlock extends Group {
 			wmeDuration.setVisible(false);
 		}
 
-
 		ComponentSpecification csp = cedReference.parentReference.parentComponent.getComponentSpecs();
 		if (csp != null) {
 			CallSpecification call = csp.calls.get(this.cedReference.getName());
@@ -90,111 +90,52 @@ public class TimingBlock extends Group {
 				if (s_wcet_2msec > 0.0) {
 					if (cedReference.parentReference.getWorstMeasuredExecutionDuration() > call.wcet) {
 						// wcet violated
-						specificationWCET.getStyleClass().setAll("specification","wcet-bar", "violated");
+						specificationWCET.getStyleClass().setAll("specification", "wcet-bar", "violated");
 					} else {
-						specificationWCET.getStyleClass().setAll("specification","wcet-bar");
+						specificationWCET.getStyleClass().setAll("specification", "wcet-bar");
 					}
 
 					double wcetET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + s_wcet_2msec);
 					double endWcet2msec = wcetET2msec - cedST2msec;
-					specificationWCET.resizeRelocate(endWcet2msec, highOffset-6, 5, candleWidth+12);
+					specificationWCET.resizeRelocate(endWcet2msec, highOffset - 6, 5, candleWidth + 12);
 					specificationWCET.toFront();
 					specificationWCET.setVisible(true);
 				} else {
 					specificationWCET.setVisible(false);
 				}
 			}
-//			ActivitySpecification act = csp.activity;
-//			if (act != null && act.color != null) {
-//				System.out.println("-fx-border-color: rgb("+ act.color.getRed() + ", " + act.color.getGreen() + ", " + act.color.getBlue() + ");");
-//				bar.setStyle("-fx-border-color: rgb("+ act.color.getRed() + ", " + act.color.getGreen() + ", " + act.color.getBlue() + ");");
-//			}
 		}
 
+		lblDuration.setText(
+				"" + df.format((this.cedReference.getEndTimestamp2msecs() - this.cedReference.getTimestamp2msecs()))
+						+ " ms");
+		lblDuration.resizeRelocate(closeOffset - lowOffset * 0.25, highOffset - candleWidth, lowOffset * 1.5,
+				candleWidth);
 
-//		lblDuration.setStyle("-fx-background-color:#FF0000");
-		lblDuration.setText("" + df.format((this.cedReference.getEndTimestamp2msecs()-this.cedReference.getTimestamp2msecs())) + " ms");
-		lblDuration.resizeRelocate(closeOffset-lowOffset*0.25, highOffset-candleWidth, lowOffset*1.5, candleWidth);
+		double mDuration = this.cedReference.parentReference.getMeanDuration() * 1e-6;
+		double minStdDuration = this.cedReference.parentReference.getStdDuration() * 1e-6;
+		if (mDuration > 0.0 && minStdDuration > 0.0) {
+			double stdST2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration - minStdDuration)
+					- cedST2msec;
+			double stdET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration + minStdDuration)
+					- cedST2msec - stdST2msec;
+			double meanDuration2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration)
+					- cedST2msec;
 
+			meanDurationLine.setStartX(meanDuration2msec);
+			meanDurationLine.setEndX(meanDuration2msec);
+			meanDurationLine.setStartY(-2.5);
+			meanDurationLine.setEndY(5 + 2.5);
 
-		// System.out.println("Real s : "+ closeOffset + ", e : " + (closeOffset
-		// + lowOffset));
-
-//		if (internalExtraInformation != null) {
-//			if (!getChildren().contains(stdRegion)) {
-//				getChildren().add(stdRegion);
-//			}
-//
-			double mDuration = this.cedReference.parentReference.getMeanDuration() * 1e-6;
-			double minStdDuration = this.cedReference.parentReference.getStdDuration() * 1e-6;
-			if (mDuration > 0.0 && minStdDuration > 0.0) {
-				double stdST2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration - minStdDuration) - cedST2msec;
-				double stdET2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration + minStdDuration) - cedST2msec - stdST2msec;
-				double meanDuration2msec = xAxis.getDisplayPosition(cedReference.getTimestamp2msecs() + mDuration) - cedST2msec;
-
-				meanDurationLine.setStartX(meanDuration2msec);
-				meanDurationLine.setEndX(meanDuration2msec);
-				meanDurationLine.setStartY(-2.5);
-				meanDurationLine.setEndY(5+2.5);
-
-				stdRegion.resizeRelocate(stdST2msec, 0, stdET2msec, 5);
-				stdRegion.toBack();
-				meanDurationLine.toFront();
-				stdRegion.setVisible(true);
-				meanDurationLine.setVisible(true);
-			} else {
-				stdRegion.setVisible(false);
-				meanDurationLine.setVisible(false);
-			}
-
-//			double mDuration = xAxis.getDisplayPosition(this.cedReference.parentReference.getMeanDuration() * 1e-6);
-//			double minStdDuration = xAxis.getDisplayPosition(this.cedReference.parentReference.getStdDuration() * 1e-6);
-//
-//			double endPoint_inChartCoord = (closeOffset + lowOffset);
-//			// System.out.println("endPoint_inChartCoord = " +
-//			// endPoint_inChartCoord);
-//			// System.out.println("startPoint_inChartCoord = " + closeOffset);
-//			// System.out.println("duration_inChartCoord = " + lowOffset);
-//
-//			if (use_msecs) {
-//				mDuration = xAxis.getDisplayPosition(internalExtraInformation.getMeanDuration() * 1e-6);
-//				minStdDuration = xAxis.getDisplayPosition(internalExtraInformation.getStdDuration() * 1e-6);
-//			} else {
-//				mDuration = xAxis.getDisplayPosition(internalExtraInformation.getMeanDuration());
-//				minStdDuration = xAxis.getDisplayPosition(internalExtraInformation.getStdDuration());
-//			}
-//			//
-//			// double dX = minStdDuration * 2;
-//			// if (dX < 1) {
-//			// tBlock.update(0, -10, 1, 20, xAxis, true);
-//			// } else {
-//			// tBlock.update(0, -10, dX, 20, xAxis, true);
-//			// }
-//			// double minDurPoint_inChartCoord = closeOffset + ;
-//
-//			// System.out.println("length " + minStdDuration * 2);
-//
-//			stdRegion.resizeRelocate(mDuration - minStdDuration, 15, minStdDuration * 2, 10);
-//
-//			// System.out.println("mean : " +
-//			// internalExtraInformation.getMeanDuration() * 1e-6 + " std : " +
-//			// internalExtraInformation.getStdDuration() * 1e-6);
-//			// System.out.println("meanG : " + mDuration + " stdG : " +
-//			// minStdDuration);
-//			// stdRegion.resizeRelocate(-10, -15, 10, 15);
-//
-//		} else if (getChildren().contains(stdRegion)) {
-//			getChildren().remove(stdRegion);
-//		}
-
-
-//			specificationWCET
-//			meanDurationLine
-//			wmeDuration
-//			stdRegion
-//			bar
-//			lblName
-//			lblDuration
+			stdRegion.resizeRelocate(stdST2msec, 0, stdET2msec, 5);
+			stdRegion.toBack();
+			meanDurationLine.toFront();
+			stdRegion.setVisible(true);
+			meanDurationLine.setVisible(true);
+		} else {
+			stdRegion.setVisible(false);
+			meanDurationLine.setVisible(false);
+		}
 	}
 
 	public void updateTooltip(String name, String container, double startTimeMS, double endTimeMS) {

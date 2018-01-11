@@ -38,7 +38,7 @@ public class MainApp extends Application {
 		// jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsWOtimesync.dat");
 		// List<TimingData> data =
 		// jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsCapacity40_2.dat");
-		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/rtReport2.dat");
+		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/rtReport4.dat");
 
 		// analyze data
 		DataProcessor dp = new DataProcessor();

@@ -1,5 +1,6 @@
 package de.dlw.timing.viz.viewmodel;
 
+import de.dlw.timing.viz.data.PortConnectionData;
 import de.dlw.timing.viz.data.PortEventData;
 import de.dlw.timing.viz.data.PortEventData.CallPortType;
 import de.dlw.timing.viz.viewmodel.tooltip.TimingPortTooltip;
@@ -63,6 +64,15 @@ public class PortAccessIndicator extends Group {
 				}
 			}
 		});
+
+//		highLowLine.setOnMouseEntered(new EventHandler<MouseEvent>() {
+//			@Override
+//			public void handle(MouseEvent event) {
+//				for (PortConnectionData pcd : portEventData.portConnectionDataRefs) {
+//
+//				}
+//			}
+//		});
 	}
 
 	public void setSeriesAndDataStyleClasses(PortEventData pedRef) {

@@ -139,6 +139,10 @@ public class DataProcessor {
 		String functionName = sample.getName();
 		String componentName = sample.getContainerName();
 
+//		if (sample.getContainerName().equals("robot_gazebo1")) {
+//			System.out.println("---> " + sample.getContainerName());
+//		}
+
 		ComponentData componentData = null;
 		if (components == null) {
 			components = new HashMap<String, ComponentData>();
@@ -295,6 +299,22 @@ public class DataProcessor {
 	public void triggerRecalculation() {
 		HashMap<ComponentPortData, ArrayList<PortEventData>> outputPortDataInRange = new HashMap<ComponentPortData, ArrayList<PortEventData>>();
 		HashMap<ComponentPortData, ArrayList<PortEventData>> inputPortDataInRange = new HashMap<ComponentPortData, ArrayList<PortEventData>>();
+
+		// SORTING CallEventData
+		for (ComponentData cd : this.components.values()) {
+			for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
+				ComponentCallData tmp = entry_s_ccd.getValue();
+//				System.out.println("Sorting callEvents");
+				Collections.sort(tmp.callEvents, new Comparator<CallEventData>() {
+					@Override
+					public int compare(CallEventData o1, CallEventData o2) {
+						return Long.compare(o1.getTimestamp(), o2.getTimestamp());
+					}
+				});
+			}
+		}
+		System.out.println("FINISHED Sorting callEvents");
+
 		// 3. Find minimal bounds.
 		currentBounds = findViewRangeOfMinimalSet();
 		System.out.println("Bounds " + currentBounds.x + " <=> " + currentBounds.y);
@@ -318,15 +338,15 @@ public class DataProcessor {
 
 				System.out.println("Processing Hook: " + tmp.getName());
 
-				// SORTING CallEventData
-				System.out.println("Sorting callEvents");
-				Collections.sort(tmp.callEvents, new Comparator<CallEventData>() {
-					@Override
-					public int compare(CallEventData o1, CallEventData o2) {
-						return Long.compare(o1.getTimestamp(), o2.getTimestamp());
-					}
-				});
-				System.out.println("Finished callEvents");
+//				// SORTING CallEventData
+//				System.out.println("Sorting callEvents");
+//				Collections.sort(tmp.callEvents, new Comparator<CallEventData>() {
+//					@Override
+//					public int compare(CallEventData o1, CallEventData o2) {
+//						return Long.compare(o1.getTimestamp(), o2.getTimestamp());
+//					}
+//				});
+//				System.out.println("Finished callEvents");
 
 				calculateBasicStatistics(tmp);
 
@@ -538,82 +558,6 @@ public class DataProcessor {
 		}
 	}
 
-	// /**
-	// * Calculate the set of involved components and update the existing set if
-	// * necessary.
-	// */
-	// public static HashMap<String, ComponentData>
-	// calculateSetOfComponents(List<TimingData> data) {
-	// if (data == null) {
-	// return null;
-	// }
-	// HashMap<String, ComponentData> comps = new HashMap<String,
-	// ComponentData>();
-	//
-	// for (TimingData timingData : data) {
-	// if (timingData instanceof CallEventData) {
-	// CallEventData tmp = (CallEventData) timingData;
-	// String name = tmp.getName();
-	// String containername = tmp.getContainerName();
-	//
-	// // if component is not yet there, create and add it!
-	// ComponentData metaComp = null;
-	// if (!comps.containsKey(containername)) {
-	// metaComp = new ComponentData(containername);
-	// } else {
-	// metaComp = comps.get(containername);
-	// }
-	//
-	// // if ComponentCallData is not yet there, create and add it!
-	// ComponentCallData ccd = null;
-	// if (!metaComp.callData.containsKey(name)) {
-	// // add component call data to meta component
-	// ccd = new ComponentCallData(name, containername);
-	// } else {
-	// ccd = metaComp.callData.get(name);
-	// }
-	//
-	// // add call sample
-	// ccd.addCallEvent(tmp);
-	//
-	// metaComp.callData.put(name, ccd);
-	// comps.put(containername, metaComp);
-	// } else if (timingData instanceof PortEventData) {
-	// PortEventData tmp = (PortEventData) timingData;
-	// String name = tmp.getName();
-	// String containername = tmp.getContainerName();
-	//
-	// // if component is not yet there, create and add it!
-	// ComponentData metaComp = null;
-	// if (!comps.containsKey(containername)) {
-	// metaComp = new ComponentData(containername);
-	// } else {
-	// metaComp = comps.get(containername);
-	// }
-	//
-	// // if ComponentPortData is not yet there, create and add it!
-	// ComponentPortData cpd = null;
-	// if (!metaComp.portData.containsKey(name)) {
-	// // add component call data to meta component
-	// cpd = new ComponentPortData(name, containername);
-	// } else {
-	// cpd = metaComp.portData.get(name);
-	// }
-	//
-	// // add call sample
-	// cpd.addPortEvent(tmp);
-	//
-	// metaComp.portData.put(name, cpd);
-	// comps.put(containername, metaComp);
-	// }
-	// }
-	//
-	// if (comps.size() > 0) {
-	// return comps;
-	// }
-	// return null;
-	// }
-
 	/**
 	 * Update iteratively to not do everything every time again over all the
 	 * huge load of data!
@@ -643,63 +587,6 @@ public class DataProcessor {
 			// it.remove(); // avoids a ConcurrentModificationException
 		}
 	}
-
-	// public void calculateBasicStatistics() {
-	// // For components
-	// ArrayList<Long> startTime = new ArrayList<Long>();
-	// ArrayList<Long> endTime = new ArrayList<Long>();
-	// ArrayList<Long> duration = new ArrayList<Long>();
-	//
-	// // get data into arrays
-	// Iterator<Entry<String, ComponentData>> it =
-	// components.entrySet().iterator();
-	// while (it.hasNext()) {
-	// Map.Entry<String, ComponentData> pair = it.next();
-	//
-	// for (Entry<String, ComponentCallData> entry :
-	// pair.getValue().callData.entrySet()) {
-	//
-	// for (CallEventData ced : entry.getValue().getCallEvents()) {
-	// startTime.add(ced.getTimestamp());
-	// endTime.add(ced.getEndTimestamp());
-	// duration.add(ced.getEndTimestamp() - ced.getTimestamp());
-	// }
-	//
-	// ComponentCallData tmp = entry.getValue();
-	//
-	// // get mean, variance and std. dev.
-	//// double mean_startTime = mean(startTime);
-	//// double var_startTime = variance(mean_startTime, startTime);
-	//// double std_startTime = stdDev(var_startTime);
-	//
-	//// double mean_endTime = mean(endTime);
-	//// double var_endTime = variance(mean_endTime, endTime);
-	//// double std_endTime = stdDev(var_endTime);
-	//
-	// double mean_duration = mean(duration);
-	// double var_duration = variance(mean_duration, duration);
-	// double std_duration = stdDev(var_duration);
-	//
-	// // tmp.setMeanStartTime(mean_startTime);
-	// // tmp.setMeanEndTime(mean_endTime);
-	// tmp.setMeanDuration(mean_duration);
-	//
-	// // tmp.setVarStartTime(var_startTime);
-	// // tmp.setVarEndTime(var_endTime);
-	// tmp.setVarDuration(var_duration);
-	//
-	// // tmp.setStdStartTime(std_startTime);
-	// // tmp.setStdEndTime(std_endTime);
-	// tmp.setStdDuration(std_duration);
-	//
-	// entry.setValue(tmp);
-	// // clear for next iteration
-	// startTime.clear();
-	// endTime.clear();
-	// duration.clear();
-	// }
-	// }
-	// }
 
 	private static double mean(ArrayList<Long> in) {
 		long sum_startTime = 0L;
@@ -734,6 +621,85 @@ public class DataProcessor {
 		for (ComponentData cd : this.components.values()) {
 			// loop over all functions (e.g., updateHook(), etc.).
 			for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
+				// ignore stopHook().
+				if (entry_s_ccd.getKey().equals("stopHook()")) {
+					continue;
+				}
+				ComponentCallData tmp = entry_s_ccd.getValue();
+				// System.out.println("For " + cd.getName() + " check hook " +
+				// tmp.getName());
+				// use the first sample to determine the bounds.
+				double start = tmp.getCallEvents().get(0).getTimestamp2msecs();
+				if (start < minTimestamp) {
+					minTimestamp = start;
+				}
+				double end = tmp.getCallEvents().get(0).getEndTimestamp2msecs();
+				if (end > maxTimestamp) {
+					maxTimestamp = end;
+				}
+				// System.out.println("Consider " +
+				// tmp.getCallEvents().get(0).getTimestamp() + " && " +
+				// tmp.getCallEvents().get(0).getEndTimestamp());
+			}
+		}
+
+		// special treatment for everything containing robot, coman, kuka.
+		// find the latest event < minTimestamp for each (containing robot, coman, kuka) and take the minimum timestamp.
+		// find the first event > maxTimestamp for each (containing robot, coman, kuka) and take the maximum timestamp.
+		double minminTimestamp = minTimestamp;
+		double maxmaxTimestamp = maxTimestamp;
+		for (ComponentData cd : this.components.values()) {
+			if ((cd.getName().contains("robot")) || (cd.getName().contains("coman")) || (cd.getName().contains("kuka"))) {
+				for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
+					// ignore startHook() and stopHook().
+					if (entry_s_ccd.getKey().equals("stopHook()") || entry_s_ccd.getKey().equals("startHook()")) {
+						continue;
+					}
+
+					double minTimestampAfter = Double.MAX_VALUE;
+					double maxTimestampBefore = -1.0;
+
+					ComponentCallData tmp = entry_s_ccd.getValue();
+
+					for (CallEventData ced : tmp.callEvents) {
+						double start = ced.getTimestamp2msecs();
+						if (start < minTimestamp && start > maxTimestampBefore) {
+							maxTimestampBefore = start;
+						}
+
+						double end = ced.getEndTimestamp2msecs();
+						if (end > maxTimestamp && end < minTimestampAfter) {
+							minTimestampAfter = end;
+						}
+					}
+
+					if (maxTimestampBefore > -1.0 && maxTimestampBefore < minminTimestamp) {
+						minminTimestamp = maxTimestampBefore;
+					}
+
+					if (minTimestampAfter < Double.MAX_VALUE && minTimestampAfter > maxmaxTimestamp) {
+						maxmaxTimestamp = minTimestampAfter;
+					}
+				}
+			}
+		}
+
+		return new Point2D.Double(minminTimestamp, maxmaxTimestamp + 10);
+	}
+
+	/**
+	 * Loop over all components and all functions associated to these
+	 * components, to find all samples within specific minimal bounds.
+	 *
+	 * @return x = minTimestamp, y = maxTimestamp
+	 */
+	public Point2D.Double findViewRangeOfMinimalSetOld() {
+		double minTimestamp = Double.MAX_VALUE;
+		double maxTimestamp = 0.0;
+		// loop over all components.
+		for (ComponentData cd : this.components.values()) {
+			// loop over all functions (e.g., updateHook(), etc.).
+			for (Entry<String, ComponentCallData> entry_s_ccd : cd.callData.entrySet()) {
 				if (entry_s_ccd.getKey().equals("stopHook()")) {
 					continue;
 				}
@@ -757,6 +723,24 @@ public class DataProcessor {
 		return new Point2D.Double(minTimestamp, maxTimestamp);
 	}
 
+	private static double CalcMHWScore(ArrayList<Long> in) {
+	  double median;
+	  int size = in.size();
+
+//	  Collections.sort(list);
+
+	  if (size  % 2 == 0)
+	  {
+	      median = (in.get(size / 2 - 1) + in.get(size / 2)) / 2;
+	  }
+	  else
+	  {
+	      median = in.get(size / 2);
+	  }
+
+	  return median;
+	}
+
 	private void calculateBasicStatistics(ComponentCallData ccd) {
 		ArrayList<Long> duration = new ArrayList<Long>();
 		long wmect = 0L;
@@ -768,14 +752,19 @@ public class DataProcessor {
 			duration.add(dur);
 		}
 
-		// TODO do this differently and save the duration array and the old size
-		// inside ccd.
+		// should actually already be done before!
+		duration.sort(new Comparator<Long>() {
+			@Override
+			public int compare(Long o1, Long o2) {
+				return Long.compare(o1, o2);
+			}
+		});
 
 		double mean_duration = mean(duration);
 		double var_duration = variance(mean_duration, duration);
 		double std_duration = stdDev(var_duration);
 
-		ccd.setMeanDuration(mean_duration);
+		ccd.setMeanDuration(mean_duration); // Perhaps use the median?
 		ccd.setVarDuration(var_duration);
 		ccd.setStdDuration(std_duration);
 
@@ -795,6 +784,7 @@ public class DataProcessor {
 		System.out.println("mean_duration = " + mean_duration);
 		System.out.println("var_duration  = " + var_duration);
 		System.out.println("std_duration  = " + std_duration);
+		System.out.println("median_duration = " + CalcMHWScore(duration));
 	}
 
 	public static String hsvToRgb(float hue, float saturation, float value) {

@@ -82,7 +82,7 @@ limitations under the License.
 }
 
 .port-connection.last {
-	-fx-stroke: rgb(255,255,255,0.8);
+	-fx-stroke: rgb(255,255,255,0.5);
 }
 
 .stdregion-bar {
