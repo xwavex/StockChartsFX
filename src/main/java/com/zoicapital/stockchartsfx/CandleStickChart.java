@@ -205,6 +205,20 @@ public class CandleStickChart extends XYChart<Number, String> {
 		this.setOnMousePressed(new EventHandler<MouseEvent>() {
 			public void handle(MouseEvent event) {
 				if (event.getClickCount() == 2) {
+					ObservableList<String> list = yAxis.getCategories();
+					list.clear();
+					list.add("seperator");
+					list.add("transition");
+					list.add("jointposcontroller");
+					list.add("caux");
+					list.add("fkin");
+					list.add("combiner");
+					list.add("robot_gazebo2");
+					list.add("robot_gazebo1");
+					//[fkin, jointposcontroller, combiner, seperator, robot_gazebo1, transition, robot_gazebo2, caux]
+//					System.out.println(list);
+					yAxis.setCategories(list);
+
 					xAxis.autoRangingProperty().set(true);
 				}
 				oldMouseX = event.getSceneX();

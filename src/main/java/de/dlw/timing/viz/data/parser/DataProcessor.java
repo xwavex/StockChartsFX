@@ -768,9 +768,14 @@ public class DataProcessor {
 		ccd.setVarDuration(var_duration);
 		ccd.setStdDuration(std_duration);
 
+		long lastTimeRegionCutoff = Long.MAX_VALUE; // TODO ULTRA HACK!
+		System.out.println("ALL TRUE EVENTS " + ccd.getCallEvents().size());
+		if (ccd.getCallEvents().size() > 210) {
+			lastTimeRegionCutoff = ccd.getCallEvents().get(ccd.getCallEvents().size() - 1000).getTimestamp();
+		}
 		for (CallEventData ced : ccd.getCallEvents()) {
 			long dur = ced.getEndTimestamp() - ced.getTimestamp();
-			if (dur > wmect && dur <= (mean_duration * 2)) { // TODO HACK!
+			if (dur > wmect && ced.getTimestamp() < lastTimeRegionCutoff) {// && dur <= (mean_duration * 2)) { // TODO HACK!
 				wmect = dur;
 				debug_start = ced.getTimestamp();
 			}

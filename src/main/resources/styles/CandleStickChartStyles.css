@@ -19,37 +19,37 @@ limitations under the License.
     -fx-text-fill: #666666;
     -fx-padding: 2 5 2 0;
 }
-
+/*
 .candlestick-average-line {
     -fx-stroke: #106ece;
     -fx-stroke-width: 2px;
 }
-
+*/
 .candlestick-candle {
-    -fx-background-color: rgb(255,34,34,1.00);
+    -fx-background-color: #898D90;
 }
 
 .wmed-bar {
-    -fx-background-color: rgb(220,220,220,0.5);
+    -fx-background-color: rgb(220,220,220,0.3);
     -fx-border-width: 0,0,0,0;
 }
 
 .specification.wcet-bar {
     -fx-border-width: 1 1 1 0;
-    -fx-border-color: rgb(0,220,0,0.7);
+    -fx-border-color: #21CE99;
 }
 
 .specification.wcet-bar.violated {
     -fx-border-color: rgb(220,0,0,0.7);
 }
-
+/*
 .candlestick-line {
     -fx-stroke: #FFFFFF;
     -fx-stroke-width: 1px;
 }
-
+*/
 .mean-duration-line {
-    -fx-stroke: #FFFFFF;
+    -fx-stroke: #040D14;
     -fx-stroke-width: 1px;
 }
 
@@ -78,11 +78,11 @@ limitations under the License.
 }
 
 .port-connection.normal {
-	-fx-stroke: rgb(200,200,200,0.1);
+	-fx-stroke: #898D9030;
 }
 
 .port-connection.last {
-	-fx-stroke: rgb(255,255,255,0.5);
+	-fx-stroke: #898D90EE;
 }
 
 .stdregion-bar {
@@ -90,20 +90,19 @@ limitations under the License.
 }
 
 .candlestick-bar {
-    -fx-background-color: rgb(200,200,200,1.00);
-    -fx-border-width: 1.5,1.5,1.5,1.5;
+    -fx-background-color: #D0D1D3;
+    -fx-border-width: 1.2,1.2,1.2,1.2;
     -fx-font-weight: bold;
 }
-
 
 .label-gray {
     -fx-background-color: rgb(25,25,25,0.70);
 }
 
 .axis {
-    -fx-text-fill: #FFFFFF;
-    -fx-font-color: #FFFFFF;
-    -fx-tick-label-fill: #FFFFFF;
+    -fx-text-fill: #040D14;
+    -fx-font-color: #040D14;
+    -fx-tick-label-fill: #040D14;
     -fx-font-size: 18pt;
     -fx-font-family: "Segoe UI Light";
     -fx-tick-length: 20;
@@ -111,21 +110,21 @@ limitations under the License.
 }
 
 .chart-title {
-     -fx-text-fill: #FFFFFF;
+     -fx-text-fill: #040D14;
     -fx-font-size: 20pt;
     -fx-font-family: "Segoe UI Light";
 }
 
 .axis-label {
-    -fx-text-fill: #462300;
+    -fx-text-fill: #040D14;
 }
 
 .axis-tick-mark {
-    -fx-stroke: #637040;
-    -fx-stroke-width: 3;
+    -fx-stroke: #040D14;
+    -fx-stroke-width: 1;
 }
 .axis-minor-tick-mark {
-    -fx-stroke: #859656;
+    -fx-stroke: #898D90;
 }
 
 /*{
@@ -133,11 +132,11 @@ limitations under the License.
 }
 */
 .chart {
-  -fx-background-color: #657F92;
+  -fx-background-color: #FFFFFF;
 }
 .fx-background-color {
   -fx-background-color: red;
 }
 .chart-plot-background {
-    -fx-background-color: rgb(0,0,0,0.25);
+    -fx-background-color: rgb(255,255,255,1.0);
 }
