@@ -207,14 +207,23 @@ public class CandleStickChart extends XYChart<Number, String> {
 				if (event.getClickCount() == 2) {
 					ObservableList<String> list = yAxis.getCategories();
 					list.clear();
-					list.add("seperator");
-					list.add("transition");
-					list.add("jointposcontroller");
-					list.add("caux");
-					list.add("fkin");
-					list.add("combiner");
-					list.add("robot_gazebo2");
-					list.add("robot_gazebo1");
+					// sc KUKA
+//					list.add("seperator");
+//					list.add("transition");
+//					list.add("jointposcontroller");
+//					list.add("caux");
+//					list.add("fkin");
+//					list.add("combiner");
+//					list.add("robot_gazebo2");
+//					list.add("robot_gazebo1");
+
+					//sc coman
+					list.add("com");
+					list.add("test");
+					list.add("base");
+					list.add("robot_gazebo");
+
+
 					//[fkin, jointposcontroller, combiner, seperator, robot_gazebo1, transition, robot_gazebo2, caux]
 //					System.out.println(list);
 					yAxis.setCategories(list);

@@ -684,7 +684,8 @@ public class DataProcessor {
 			}
 		}
 
-		return new Point2D.Double(minminTimestamp, maxmaxTimestamp + 10);
+//		return new Point2D.Double(minminTimestamp, maxmaxTimestamp + 10);
+		return new Point2D.Double(maxmaxTimestamp-10, maxmaxTimestamp+10);
 	}
 
 	/**
@@ -770,8 +771,8 @@ public class DataProcessor {
 
 		long lastTimeRegionCutoff = Long.MAX_VALUE; // TODO ULTRA HACK!
 		System.out.println("ALL TRUE EVENTS " + ccd.getCallEvents().size());
-		if (ccd.getCallEvents().size() > 210) {
-			lastTimeRegionCutoff = ccd.getCallEvents().get(ccd.getCallEvents().size() - 1000).getTimestamp();
+		if (ccd.getCallEvents().size() > 300) {
+			lastTimeRegionCutoff = ccd.getCallEvents().get(ccd.getCallEvents().size() - 300).getTimestamp();
 		}
 		for (CallEventData ced : ccd.getCallEvents()) {
 			long dur = ced.getEndTimestamp() - ced.getTimestamp();

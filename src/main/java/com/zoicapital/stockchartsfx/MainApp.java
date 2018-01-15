@@ -38,11 +38,17 @@ public class MainApp extends Application {
 		// jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsWOtimesync.dat");
 		// List<TimingData> data =
 		// jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/reportsCapacity40_2.dat");
-		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/rtReport8.dat");
+
+
+//		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/rtReport8.dat");
+
+		List<TimingData> data = jdp.parse("/home/dwigand/code/misc/java/javafx/StockChartsFX/coman2.dat");
 
 		// analyze data
 		DataProcessor dp = new DataProcessor();
-		dp.graph = jdp.parseDotGraph("/home/dwigand/code/misc/java/javafx/StockChartsFX/orograph_minimal.dot");
+//		dp.graph = jdp.parseDotGraph("/home/dwigand/code/misc/java/javafx/StockChartsFX/orograph_minimal.dot");
+
+		dp.graph = jdp.parseDotGraph("/home/dwigand/code/misc/java/javafx/StockChartsFX/coman1_graph_minimal.dot");
 
 		// DataProcessor.shiftTimestamps(jdp.minimalTimestamp, data);
 		// dp.setComponents(DataProcessor.calculateSetOfComponents(data));
